@@ -1,0 +1,6 @@
+# dune init proj typeur_evaluateur
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /Users/graham.preston/.cache/dune/db
+# Workspace root: /Users/graham.preston/fac_src/TAS/typeur_evaluateur
+# Auto-detected concurrency: 8

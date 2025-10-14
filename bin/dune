@@ -1,4 +1,4 @@
 (executable
- (public_name typeur_evaluateur)
+ (public_name main_typeur_evaluateur)
  (name main)
  (libraries typeur_evaluateur))

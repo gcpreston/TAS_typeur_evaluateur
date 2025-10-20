@@ -49,3 +49,19 @@ let rec substitue_var (t : pterm) (x : string) (t0 : pterm) : pterm =
     | App (u, v) -> App (substitue_var u x t0, substitue_var v x t0)
     | Abs (x1, u) when x1 = x -> Abs (x1, u) (* re-linking name, which means we can't reference x in u at all *)
     | Abs (y, u) -> Abs (y, substitue_var u x t0)
+
+exception AppToNonAbs
+
+(* Evaluateur left-to-right, call-by-value *)
+let rec eval (t : pterm) : pterm =
+  print_endline ("eval " ^ (print_term t));
+  match t with
+  Var x -> Var x
+  | Abs (x, u) -> Abs (x, eval u)
+  | App (m, n) ->
+    let m_val = eval m in
+    let n_val = eval n in
+    match m_val with
+      Abs (x, m_prime) -> substitue_var m_prime x n_val
+      (* | e -> e *)
+      | _ -> raise AppToNonAbs

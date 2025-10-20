@@ -40,3 +40,12 @@ alpha_convert_helper (t : pterm) (map : mapping) : pterm =
     | Abs (x, u) ->
       let x1 = nouvelle_var () in
       Abs (x1, alpha_convert_helper u ((x, x1)::map))
+
+(* Substitue une variable par un terme dans un autre terme *)
+let rec substitue_var (t : pterm) (x : string) (t0 : pterm) : pterm =
+  match t with
+    Var x1 when x1 = x -> t0
+    | Var v2 -> Var v2
+    | App (u, v) -> App (substitue_var u x t0, substitue_var v x t0)
+    | Abs (x1, u) when x1 = x -> Abs (x1, u) (* re-linking name, which means we can't reference x in u at all *)
+    | Abs (y, u) -> Abs (y, substitue_var u x t0)

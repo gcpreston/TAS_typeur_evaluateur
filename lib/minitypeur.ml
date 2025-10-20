@@ -123,9 +123,9 @@ let rec unification (e : equa_zip) (but : string) : ptype =
     (* types nat des deux cotes : on passe *)
   | (e1, (Nat, Nat)::e2) -> unification (e1, e2) but
     (* types nat à gauche pas à droite : échec *)
-  (* | (_e1, (Nat, t3)::_e2) -> raise (Echec_unif ("type entier non-unifiable avec "^(print_type t3)))
+  (* | (_e1, (Nat, t3)::_e2) -> raise (Echec_unif ("type entier non-unifiable avec "^(print_type t3))) *)
     (* types à droite pas à gauche : échec *)
-  | (_e1, (t3, Nat)::_e2) -> raise (Echec_unif ("type entier non-unifiable avec "^(print_type t3))) *)
+  (* | (_e1, (t3, Nat)::_e2) -> raise (Echec_unif ("type entier non-unifiable avec "^(print_type t3))) *)
 
 (* enchaine generation d'equation et unification *)
 let inference (t : pterm) : string =

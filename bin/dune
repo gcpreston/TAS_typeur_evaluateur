@@ -1,4 +1,9 @@
 (executable
- (public_name main_typeur_evaluateur)
- (name main)
+ (public_name typeur)
+ (name main_typeur)
+ (libraries typeur_evaluateur))
+
+(executable
+ (public_name eval)
+ (name main_eval)
  (libraries typeur_evaluateur))

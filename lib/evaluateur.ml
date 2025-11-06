@@ -63,5 +63,5 @@ let rec eval (t : pterm) : pterm =
     let n_val = eval n in
     match m_val with
       Abs (x, m_prime) -> substitue_var m_prime x n_val
-      (* | e -> e *)
-      | _ -> raise AppToNonAbs
+      | e -> e
+      (* | _ -> raise AppToNonAbs *)

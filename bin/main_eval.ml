@@ -17,7 +17,7 @@ let eval_ex_id_k = Evaluateur.eval ex_id_k
 let ex_mult : Evaluateur.pterm = Abs ("n", Abs ("m", Abs ("f", Abs ("e", App(App (Var "n", App (Var "m", Var "f")), Var "e")))))
 let ex_2 : Evaluateur.pterm = Abs ("f", Abs ("e", App (Var "f", App (Var "f", Var "e"))))
 let ex_3 : Evaluateur.pterm = Abs ("f", Abs ("e", App (Var "f", App (Var "f", App (Var "f", Var "e")))))
-let ex_add_2_3 : Evaluateur.pterm = App (App (ex_mult, ex_2), ex_3)
+let ex_add_2_3 : Evaluateur.pterm = App (App (ex_add, ex_2), ex_3)
 let eval_ex_add_2_3 = Evaluateur.eval ex_add_2_3 *)
 (* let ex_delta : Evaluateur.pterm = Abs ("x", App (Var "x", Var "x"))
 let ex_delta_delta : Evaluateur.pterm = App (ex_delta, ex_delta)
@@ -42,6 +42,7 @@ let main () =
   print_endline "";
   print_endline "Evaluation";
   print_endline "======================";
+  (* print_endline (Evaluateur.print_term eval_ex_add_2_3); *)
   print_endline (Evaluateur.print_term eval_ex_id_k);
   print_endline (Evaluateur.print_term eval_ex_id_id_x)
 

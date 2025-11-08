@@ -11,6 +11,9 @@ type pterm = Var of string
   | Cons of pterm * pterm
   | Head of pterm
   | Tail of pterm
+  (* Branching *)
+  | IfZero of pterm * pterm * pterm
+  | IfEmpty of pterm * pterm * pterm
 
 (* Types *)
 type ptype = VarType of string
@@ -39,6 +42,8 @@ let rec print_term (t : pterm) : string =
     | Cons (hd, tl) -> print_list (Cons (hd, tl))
     | Head l -> "(hd " ^ (print_list l) ^ ")"
     | Tail l -> "(tl " ^ (print_list l) ^ ")"
+    | IfZero (c, t, f) -> "(ifzero " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
+    | IfEmpty (c, t, f) -> "(ifempty " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
 
 and print_list (l : pterm) : string =
   match l with
@@ -126,6 +131,17 @@ let rec genere_equa (te : pterm) (ty : ptype) (e : env) : equa =
       (ty, VarType nv)::(genere_equa l (ListType (VarType nv)) e)
   | Tail l -> let nv : string = nouvelle_var () in
       (ty, ListType (VarType nv))::(genere_equa l (ListType (VarType nv)) e)
+  | IfZero (c, t, f) -> let nv : string = nouvelle_var () in
+      let eqc : equa = genere_equa c NatType e in
+      let eqt : equa = genere_equa t (VarType nv) e in
+      let eqf : equa = genere_equa f (VarType nv) e in
+      (ty, (VarType nv))::(eqc @ eqt @ eqf)
+  | IfEmpty (c, t, f) -> let nv1 : string = nouvelle_var () in
+      let nv2 : string = nouvelle_var () in
+      let eqc : equa = genere_equa c (ListType (VarType nv1)) e in
+      let eqt : equa = genere_equa t (VarType nv2) e in
+      let eqf : equa = genere_equa f (VarType nv2) e in
+      (ty, (VarType nv2))::(eqc @ eqt @ eqf)
 
 exception Echec_unif of string
 

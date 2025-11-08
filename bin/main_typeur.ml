@@ -23,6 +23,10 @@ let ex_hd : Minitypeur.pterm = Head (Cons (N 5, EmptyList))
 let inf_ex_hd : string = Minitypeur.inference ex_hd
 let ex_tl : Minitypeur.pterm = Tail (Cons (N 5, EmptyList))
 let inf_ex_tl : string = Minitypeur.inference ex_tl
+let ex_ifzero : Minitypeur.pterm = IfZero (N 0, N 5, EmptyList)
+let inf_ex_ifzero : string = Minitypeur.inference ex_ifzero
+let ex_ifempty : Minitypeur.pterm = IfEmpty (EmptyList, N 5, N 10)
+let inf_ex_ifempty : string = Minitypeur.inference ex_ifempty
 
 let main () =
   print_endline "======================";
@@ -46,6 +50,10 @@ let main () =
   print_endline "======================";
   print_endline inf_ex_hd;
   print_endline "======================";
-  print_endline inf_ex_tl
+  print_endline inf_ex_tl;
+  print_endline "======================";
+  print_endline inf_ex_ifzero;
+  print_endline "======================";
+  print_endline inf_ex_ifempty
 
 let _ = main ()

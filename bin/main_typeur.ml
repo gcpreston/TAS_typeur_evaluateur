@@ -15,6 +15,10 @@ let ex_omega : Minitypeur.pterm = App (Abs ("x", App (Var "x", Var "x")), Abs ("
 let inf_ex_omega : string = Minitypeur.inference ex_omega
 let ex_nat3 : Minitypeur.pterm = App (ex_nat2, ex_id)
 let inf_ex_nat3 : string = Minitypeur.inference ex_nat3
+let ex_lst1 : Minitypeur.pterm = EmptyList
+let inf_ex_lst1 : string = Minitypeur.inference ex_lst1
+let ex_lst2 : Minitypeur.pterm = Cons (N 5, EmptyList)
+let inf_ex_lst2 : string = Minitypeur.inference ex_lst2
 
 let main () =
   print_endline "======================";
@@ -30,6 +34,10 @@ let main () =
   print_endline "======================";
   print_endline inf_ex_nat2;
   print_endline "======================";
-  print_endline inf_ex_nat3
+  print_endline inf_ex_nat3;
+  print_endline "======================";
+  print_endline inf_ex_lst1;
+  print_endline "======================";
+  print_endline inf_ex_lst2
 
 let _ = main ()

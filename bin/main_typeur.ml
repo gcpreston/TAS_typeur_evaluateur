@@ -1,34 +1,34 @@
 open Typeur_evaluateur
 
 (* ***EXEMPLES*** *)
-let ex_id : Minitypeur.pterm = Abs ("x", Var "x")
-let inf_ex_id : string = Minitypeur.inference ex_id
-let ex_k : Minitypeur.pterm = Abs ("x", Abs ("y", Var "x"))
-let inf_ex_k : string = Minitypeur.inference ex_k
-let ex_s : Minitypeur.pterm = Abs ("x", Abs ("y", Abs ("z", App (App (Var "x", Var "z"), App (Var "y", Var "z")))))
-let inf_ex_s : string = Minitypeur.inference ex_s
-let ex_nat1 : Minitypeur.pterm = App (Abs ("x", Add(Var "x", N 1)), N 3)
-let inf_ex_nat1 : string = Minitypeur.inference ex_nat1
-let ex_nat2 : Minitypeur.pterm = Abs ("x", Add( Var "x", Var "x"))
-let inf_ex_nat2 : string = Minitypeur.inference ex_nat2
-let ex_omega : Minitypeur.pterm = App (Abs ("x", App (Var "x", Var "x")), Abs ("y", App (Var "y", Var "y")))
-let inf_ex_omega : string = Minitypeur.inference ex_omega
-let ex_nat3 : Minitypeur.pterm = App (ex_nat2, ex_id)
-let inf_ex_nat3 : string = Minitypeur.inference ex_nat3
-let ex_lst1 : Minitypeur.pterm = EmptyList
-let inf_ex_lst1 : string = Minitypeur.inference ex_lst1
-let ex_lst2 : Minitypeur.pterm = Cons (N 5, EmptyList)
-let inf_ex_lst2 : string = Minitypeur.inference ex_lst2
-let ex_hd : Minitypeur.pterm = Head (Cons (N 5, EmptyList))
-let inf_ex_hd : string = Minitypeur.inference ex_hd
-let ex_tl : Minitypeur.pterm = Tail (Cons (N 5, EmptyList))
-let inf_ex_tl : string = Minitypeur.inference ex_tl
-let ex_ifzero : Minitypeur.pterm = IfZero (N 0, N 5, EmptyList)
-let inf_ex_ifzero : string = Minitypeur.inference ex_ifzero
-let ex_ifempty : Minitypeur.pterm = IfEmpty (EmptyList, N 5, N 10)
-let inf_ex_ifempty : string = Minitypeur.inference ex_ifempty
-let ex_let : Minitypeur.pterm = Let ("x", N 5, Add (Var "x", N 4))
-let inf_ex_let : string = Minitypeur.inference ex_let
+let ex_id : Typeur.pterm = Abs ("x", Var "x")
+let inf_ex_id : string = Typeur.inference ex_id
+let ex_k : Typeur.pterm = Abs ("x", Abs ("y", Var "x"))
+let inf_ex_k : string = Typeur.inference ex_k
+let ex_s : Typeur.pterm = Abs ("x", Abs ("y", Abs ("z", App (App (Var "x", Var "z"), App (Var "y", Var "z")))))
+let inf_ex_s : string = Typeur.inference ex_s
+let ex_nat1 : Typeur.pterm = App (Abs ("x", Add(Var "x", N 1)), N 3)
+let inf_ex_nat1 : string = Typeur.inference ex_nat1
+let ex_nat2 : Typeur.pterm = Abs ("x", Add( Var "x", Var "x"))
+let inf_ex_nat2 : string = Typeur.inference ex_nat2
+let ex_omega : Typeur.pterm = App (Abs ("x", App (Var "x", Var "x")), Abs ("y", App (Var "y", Var "y")))
+let inf_ex_omega : string = Typeur.inference ex_omega
+let ex_nat3 : Typeur.pterm = App (ex_nat2, ex_id)
+let inf_ex_nat3 : string = Typeur.inference ex_nat3
+let ex_lst1 : Typeur.pterm = EmptyList
+let inf_ex_lst1 : string = Typeur.inference ex_lst1
+let ex_lst2 : Typeur.pterm = Cons (N 5, EmptyList)
+let inf_ex_lst2 : string = Typeur.inference ex_lst2
+let ex_hd : Typeur.pterm = Head (Cons (N 5, EmptyList))
+let inf_ex_hd : string = Typeur.inference ex_hd
+let ex_tl : Typeur.pterm = Tail (Cons (N 5, EmptyList))
+let inf_ex_tl : string = Typeur.inference ex_tl
+let ex_ifzero : Typeur.pterm = IfZero (N 0, N 5, EmptyList)
+let inf_ex_ifzero : string = Typeur.inference ex_ifzero
+let ex_ifempty : Typeur.pterm = IfEmpty (EmptyList, N 5, N 10)
+let inf_ex_ifempty : string = Typeur.inference ex_ifempty
+let ex_let : Typeur.pterm = Let ("x", N 5, Add (Var "x", N 4))
+let inf_ex_let : string = Typeur.inference ex_let
 
 let main () =
   print_endline "======================";

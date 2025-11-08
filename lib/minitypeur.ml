@@ -9,8 +9,8 @@ type pterm = Var of string
   (* Lists and List operations *)
   | EmptyList
   | Cons of pterm * pterm
-  (* | Head of pterm
-  | Tail of pterm *)
+  | Head of pterm
+  | Tail of pterm
 
 (* Types *)
 type ptype = VarType of string
@@ -35,15 +35,22 @@ let rec print_term (t : pterm) : string =
     | N n -> string_of_int n
     | Add (t1, t2) -> "(" ^ (print_term t1) ^" + "^ (print_term t2) ^ ")"
     | Sub (t1, t2) -> "(" ^ (print_term t1) ^" - "^ (print_term t2) ^ ")"
+    | EmptyList -> print_list EmptyList
+    | Cons (hd, tl) -> print_list (Cons (hd, tl))
+    | Head l -> "(hd " ^ (print_list l) ^ ")"
+    | Tail l -> "(tl " ^ (print_list l) ^ ")"
+
+and print_list (l : pterm) : string =
+  match l with
     | EmptyList -> "[]"
-    | Cons (hd, tl) -> "[" ^ (print_list_inner (Cons (hd, tl))) ^ "]"
+    | Cons (hd, tl) ->  "[" ^ (print_list_inner (Cons (hd, tl))) ^ "]"
+    | _ -> raise (Echec_print "print_list expected a Cons or EmptyList")
 
 and print_list_inner (l : pterm) : string =
   match l with
-    | EmptyList -> ""
     | Cons (hd, EmptyList) -> print_term hd
     | Cons (hd, tl) -> print_term hd ^ ", " ^ print_list_inner tl
-    | _ -> raise (Echec_print "print_list_inner expected a Cons or EmptyList")
+    | _ -> raise (Echec_print "print_list_inner expected a Cons")
 
 (* pretty printer de types*)
 let rec print_type (t : ptype) : string =
@@ -115,6 +122,10 @@ let rec genere_equa (te : pterm) (ty : ptype) (e : env) : equa =
       let eq1 : equa = genere_equa hd (VarType nv) e in
       let eq2 : equa = genere_equa tl (ListType (VarType nv)) e in
       (ty, ListType (VarType nv))::(eq1 @ eq2)
+  | Head l -> let nv : string = nouvelle_var () in
+      (ty, VarType nv)::(genere_equa l (ListType (VarType nv)) e)
+  | Tail l -> let nv : string = nouvelle_var () in
+      (ty, ListType (VarType nv))::(genere_equa l (ListType (VarType nv)) e)
 
 exception Echec_unif of string
 

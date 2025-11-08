@@ -5,6 +5,7 @@ type pterm = Var of string
   (* Nats and Nat operations *)
   | N of int
   | Add of pterm * pterm
+  | Sub of pterm * pterm
   (* Lists and List operations *)
   | EmptyList
   | Cons of pterm * pterm
@@ -33,6 +34,7 @@ let rec print_term (t : pterm) : string =
     | Abs (x, t) -> "(fun "^ x ^" -> " ^ (print_term t) ^")"
     | N n -> string_of_int n
     | Add (t1, t2) -> "(" ^ (print_term t1) ^" + "^ (print_term t2) ^ ")"
+    | Sub (t1, t2) -> "(" ^ (print_term t1) ^" - "^ (print_term t2) ^ ")"
     | EmptyList -> "[]"
     | Cons (hd, tl) -> "[" ^ (print_list_inner (Cons (hd, tl))) ^ "]"
 
@@ -101,6 +103,9 @@ let rec genere_equa (te : pterm) (ty : ptype) (e : env) : equa =
       (ty, ArrowType (VarType nv1, VarType nv2))::(genere_equa t (VarType nv2) ((x, VarType nv1)::e))
   | N _ -> [(ty, NatType)]
   | Add (t1, t2) -> let eq1 : equa = genere_equa t1 NatType e in
+      let eq2 : equa = genere_equa t2 NatType e in
+      (ty, NatType)::(eq1 @ eq2)
+  | Sub (t1, t2) -> let eq1 : equa = genere_equa t1 NatType e in
       let eq2 : equa = genere_equa t2 NatType e in
       (ty, NatType)::(eq1 @ eq2)
   | EmptyList -> let nv : string = nouvelle_var () in

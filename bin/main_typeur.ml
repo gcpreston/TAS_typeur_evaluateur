@@ -27,6 +27,8 @@ let ex_ifzero : Minitypeur.pterm = IfZero (N 0, N 5, EmptyList)
 let inf_ex_ifzero : string = Minitypeur.inference ex_ifzero
 let ex_ifempty : Minitypeur.pterm = IfEmpty (EmptyList, N 5, N 10)
 let inf_ex_ifempty : string = Minitypeur.inference ex_ifempty
+let ex_let : Minitypeur.pterm = Let ("x", N 5, Add (Var "x", N 4))
+let inf_ex_let : string = Minitypeur.inference ex_let
 
 let main () =
   print_endline "======================";
@@ -54,6 +56,8 @@ let main () =
   print_endline "======================";
   print_endline inf_ex_ifzero;
   print_endline "======================";
-  print_endline inf_ex_ifempty
+  print_endline inf_ex_ifempty;
+  print_endline "======================";
+  print_endline inf_ex_let
 
 let _ = main ()

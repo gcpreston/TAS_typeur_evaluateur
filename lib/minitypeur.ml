@@ -14,6 +14,8 @@ type pterm = Var of string
   (* Branching *)
   | IfZero of pterm * pterm * pterm
   | IfEmpty of pterm * pterm * pterm
+  (* let x = e1 in e2 *)
+  | Let of string * pterm * pterm
 
 (* Types *)
 type ptype = VarType of string
@@ -44,6 +46,7 @@ let rec print_term (t : pterm) : string =
     | Tail l -> "(tl " ^ (print_list l) ^ ")"
     | IfZero (c, t, f) -> "(ifzero " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
     | IfEmpty (c, t, f) -> "(ifempty " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
+    | Let (x, e1, e2) -> "let " ^ x ^ " = " ^ (print_term e1) ^ " in " ^ (print_term e2)
 
 and print_list (l : pterm) : string =
   match l with
@@ -142,6 +145,11 @@ let rec genere_equa (te : pterm) (ty : ptype) (e : env) : equa =
       let eqt : equa = genere_equa t (VarType nv2) e in
       let eqf : equa = genere_equa f (VarType nv2) e in
       (ty, (VarType nv2))::(eqc @ eqt @ eqf)
+  | Let (x, e1, e2) -> let nv1 : string = nouvelle_var () in
+      let nv2 : string = nouvelle_var () in
+      let eq1 : equa = genere_equa e1 (VarType nv1) e in
+      let eq2 : equa = genere_equa e2 (VarType nv2) ((x, VarType nv1)::e) in
+      (ty, (VarType nv2))::(eq1 @ eq2)
 
 exception Echec_unif of string
 

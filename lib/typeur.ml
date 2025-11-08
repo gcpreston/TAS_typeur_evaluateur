@@ -1,22 +1,3 @@
-(* Termes *)
-type pterm = Var of string
-  | App of pterm * pterm
-  | Abs of string * pterm
-  (* Nats and Nat operations *)
-  | N of int
-  | Add of pterm * pterm
-  | Sub of pterm * pterm
-  (* Lists and List operations *)
-  | EmptyList
-  | Cons of pterm * pterm
-  | Head of pterm
-  | Tail of pterm
-  (* Branching *)
-  | IfZero of pterm * pterm * pterm
-  | IfEmpty of pterm * pterm * pterm
-  (* let x = e1 in e2 *)
-  | Let of string * pterm * pterm
-
 (* Types *)
 type ptype = VarType of string
   | ArrowType of ptype * ptype
@@ -28,37 +9,6 @@ type env = (string * ptype) list
 
 (* Listes d'équations *)
 type equa = (ptype * ptype) list
-
-exception Echec_print of string
-
-(* pretty printer de termes*)
-let rec print_term (t : pterm) : string =
-  match t with
-    Var x -> x
-    | App (t1, t2) -> "(" ^ (print_term t1) ^" "^ (print_term t2) ^ ")"
-    | Abs (x, t) -> "(fun "^ x ^" -> " ^ (print_term t) ^")"
-    | N n -> string_of_int n
-    | Add (t1, t2) -> "(" ^ (print_term t1) ^" + "^ (print_term t2) ^ ")"
-    | Sub (t1, t2) -> "(" ^ (print_term t1) ^" - "^ (print_term t2) ^ ")"
-    | EmptyList -> print_list EmptyList
-    | Cons (hd, tl) -> print_list (Cons (hd, tl))
-    | Head l -> "(hd " ^ (print_list l) ^ ")"
-    | Tail l -> "(tl " ^ (print_list l) ^ ")"
-    | IfZero (c, t, f) -> "(ifzero " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
-    | IfEmpty (c, t, f) -> "(ifempty " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
-    | Let (x, e1, e2) -> "let " ^ x ^ " = " ^ (print_term e1) ^ " in " ^ (print_term e2)
-
-and print_list (l : pterm) : string =
-  match l with
-    | EmptyList -> "[]"
-    | Cons (hd, tl) ->  "[" ^ (print_list_inner (Cons (hd, tl))) ^ "]"
-    | _ -> raise (Echec_print "print_list expected a Cons or EmptyList")
-
-and print_list_inner (l : pterm) : string =
-  match l with
-    | Cons (hd, EmptyList) -> print_term hd
-    | Cons (hd, tl) -> print_term hd ^ ", " ^ print_list_inner tl
-    | _ -> raise (Echec_print "print_list_inner expected a Cons")
 
 (* pretty printer de types*)
 let rec print_type (t : ptype) : string =
@@ -106,7 +56,7 @@ let substitue_type_partout (e : equa) (v : string) (t0 : ptype) : equa =
   List.map (fun (x, y) -> (substitue_type x v t0, substitue_type y v t0)) e
 
 (* genere des equations de typage à partir d'un terme *)
-let rec genere_equa (te : pterm) (ty : ptype) (e : env) : equa =
+let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   match te with
     Var v -> let tv : ptype = cherche_type v e in [(ty, tv)]
   | App (t1, t2) -> let nv : string = nouvelle_var () in
@@ -214,9 +164,9 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | (e1, (ListType t1, ListType t2)::e2) -> unification (e1, (t1, t2)::e2) but
 
 (* enchaine generation d'equation et unification *)
-let inference (t : pterm) : string =
+let inference (t : Common.pterm) : string =
   let e : equa_zip = ([], genere_equa t (VarType "but") []) in
   print_endline ("starting inference with " ^ (print_equa_zip e));
   try (let res = unification e "but" in
-       (print_term t)^" ***TYPABLE*** avec le type "^(print_type res))
-  with Echec_unif bla -> (print_term t)^" ***PAS TYPABLE*** : "^bla
+       (Common.print_term t)^" ***TYPABLE*** avec le type "^(print_type res))
+  with Echec_unif bla -> (Common.print_term t)^" ***PAS TYPABLE*** : "^bla

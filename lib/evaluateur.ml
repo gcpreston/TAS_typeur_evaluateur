@@ -40,6 +40,7 @@ alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
     | IfZero (c, t, f) -> IfZero (alpha_convert_helper c map, alpha_convert_helper t map, alpha_convert_helper f map)
     | IfEmpty (c, t, f) -> IfEmpty (alpha_convert_helper c map, alpha_convert_helper t map, alpha_convert_helper f map)
     | Let (x, e1, e2) -> Let (x, alpha_convert_helper e1 map, alpha_convert_helper e2 map)
+    | Fix m -> Fix (alpha_convert_helper m map)
 
 (* Substitue une variable par un terme dans un autre terme *)
 let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Common.pterm =
@@ -59,6 +60,7 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Comm
     | IfZero (c, t, f) -> IfZero (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
     | IfEmpty (c, t, f) -> IfEmpty (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
     | Let (x, e1, e2) -> Let (x, substitue_var e1 x t0, substitue_var e2 x t0)
+    | Fix m -> Fix m
 
 exception AppToNonAbs
 exception Echec_typage of string
@@ -77,7 +79,9 @@ let rec eval (t : Common.pterm) : Common.pterm =
       let m_val = eval m in
       let n_val = eval n in
       (match m_val with
-        Abs (x, m_prime) -> eval (substitue_var m_prime x n_val)
+        Fix m -> let m_prime = eval (substitue_var m "phi" (Fix m)) in
+          eval (App (m_prime, n_val))
+        | Abs (x, m_prime) -> eval (substitue_var m_prime x n_val)
         | e -> e)
         (* | _ -> raise AppToNonAbs *)
     | N i -> N i
@@ -112,3 +116,4 @@ let rec eval (t : Common.pterm) : Common.pterm =
         EmptyList -> eval t
         | _ -> eval f)
     | Let (x, e1, e2) -> eval (App (Abs (x, e2), e1)) (* TODO: This feels like it wants to be more complex lol *)
+    | Fix m -> Fix m

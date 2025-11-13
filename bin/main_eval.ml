@@ -26,6 +26,22 @@ let ex_id_id_x : Common.pterm = App (ex_id, App(ex_id, Var "x"))
 let eval_ex_id_id_x = Evaluateur.eval ex_id_id_x
 let ex_let : Common.pterm = Let ("x", Add (N 1, N 2), Add (Var "x", N 10))
 let eval_ex_let = Evaluateur.eval ex_let
+(* let ex_rec_add : Common.pterm = App (App (
+  Fix (
+    Abs ("a", Abs ("b",
+      IfZero (
+        Var "a",
+        Var "b",
+        (Sub (App "phi" (Add (Var "a", N 1), Var "b")), N 1)
+      )
+    ))
+  )
+), N 2), N 3 *)
+let ex_rec : Common.pterm = App (
+  Fix (Abs ("n", IfZero (Var "n", N 1234, App (Var "phi", Sub (Var "n", N 1))))),
+  N 3
+)
+let eval_ex_rec : Common.pterm = Evaluateur.eval ex_rec
 
 let main () =
   print_endline "Alpha-conversion";
@@ -47,6 +63,7 @@ let main () =
   (* print_endline (Common.print_term eval_ex_add_2_3); *)
   print_endline (Common.print_term eval_ex_id_k);
   print_endline (Common.print_term eval_ex_id_id_x);
-  print_endline (Common.print_term eval_ex_let)
+  print_endline (Common.print_term eval_ex_let);
+  print_endline (Common.print_term eval_ex_rec)
 
 let _ = main ()

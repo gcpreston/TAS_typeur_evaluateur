@@ -16,6 +16,8 @@ type pterm = Var of string
   | IfEmpty of pterm * pterm * pterm
   (* let x = e1 in e2 *)
   | Let of string * pterm * pterm
+  (* recursive operator *)
+  | Fix of pterm
 
 exception Echec_print of string
 
@@ -35,6 +37,7 @@ let rec print_term (t : pterm) : string =
     | IfZero (c, t, f) -> "(ifzero " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
     | IfEmpty (c, t, f) -> "(ifempty " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
     | Let (x, e1, e2) -> "let " ^ x ^ " = " ^ (print_term e1) ^ " in " ^ (print_term e2)
+    | Fix m -> "fix " ^ (print_term m)
 
 and print_list (l : pterm) : string =
   match l with

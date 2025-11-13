@@ -100,6 +100,10 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
       let eq2 : equa = genere_equa e2 (VarType nv2) ((x, VarType nv1)::e) in
       (ty, (VarType nv2))::(eq1 @ eq2)
+  (* First iteration: disallow nested recursive functions *)
+  | Fix _ -> []
+      (* let nv : string = nouvelle_var () in
+      let eq : equa = genere_equa *)
 
 exception Echec_unif of string
 

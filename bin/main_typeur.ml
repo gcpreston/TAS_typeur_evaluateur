@@ -29,6 +29,8 @@ let ex_ifempty : Common.pterm = IfEmpty (EmptyList, N 5, N 10)
 let inf_ex_ifempty : string = Typeur.inference ex_ifempty
 let ex_let : Common.pterm = Let ("x", N 5, Add (Var "x", N 4))
 let inf_ex_let : string = Typeur.inference ex_let
+let ex_rec_add : Common.pterm = App (App (Fix (Abs ("a", Abs ("b", IfZero (Var "a", Var "b", (Sub ("phi" (* TODO *) (Add (Var "a", N 1), Var "b"), N 1)))))), N 2), N 3)
+let inf_ex_rec_add : string = Typeur.inference ex_rec_add
 
 let main () =
   print_endline "======================";
@@ -58,6 +60,8 @@ let main () =
   print_endline "======================";
   print_endline inf_ex_ifempty;
   print_endline "======================";
-  print_endline inf_ex_let
+  print_endline inf_ex_let;
+  print_endline "======================";
+  print_endline inf_ex_rec_add
 
 let _ = main ()

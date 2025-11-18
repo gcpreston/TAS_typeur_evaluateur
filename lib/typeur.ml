@@ -3,6 +3,8 @@ type ptype = VarType of string
   | ArrowType of ptype * ptype
   | NatType
   | ListType of ptype
+  | Unit
+  | RefType of ptype
 
 (* Environnements de typage *)
 type env = (string * ptype) list
@@ -17,6 +19,8 @@ let rec print_type (t : ptype) : string =
   | ArrowType (t1, t2) -> "(" ^ (print_type t1) ^" -> "^ (print_type t2) ^")"
   | NatType -> "NatType"
   | ListType lt -> "[" ^ (print_type lt) ^ "]"
+  | Unit -> "()"
+  | RefType t -> "(ref " ^ (print_type t) ^ ")"
 
 (* générateur de noms frais de variables de types *)
 let compteur_var : int ref = ref 0
@@ -40,6 +44,7 @@ let rec appartient_type (v : string) (t : ptype) : bool =
     VarType v1 when v1 = v -> true
   | ArrowType (t1, t2) -> (appartient_type v t1) || (appartient_type v t2)
   | ListType t1 -> appartient_type v t1
+  | RefType t1 -> appartient_type v t1
   | _ -> false
 
 (* remplace une variable par un type dans type *)
@@ -50,6 +55,8 @@ let rec substitue_type (t : ptype) (v : string) (t0 : ptype) : ptype =
   | ArrowType (t1, t2) -> ArrowType (substitue_type t1 v t0, substitue_type t2 v t0)
   | NatType -> NatType
   | ListType lt -> ListType (substitue_type lt v t0)
+  | RefType t1 -> RefType (substitue_type t1 v t0)
+  | Unit -> Unit
 
 (* remplace une variable par un type dans une liste d'équations*)
 let substitue_type_partout (e : equa) (v : string) (t0 : ptype) : equa =
@@ -100,6 +107,15 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
       let eq2 : equa = genere_equa e2 (VarType nv2) ((x, VarType nv1)::e) in
       (ty, (VarType nv2))::(eq1 @ eq2)
+  | Ref m -> let nv : string = nouvelle_var () in
+      (ty, RefType (VarType nv))::(genere_equa m (VarType nv) e)
+  | Deref m -> let nv : string = nouvelle_var () in
+      (ty, (VarType nv))::(genere_equa m (RefType (VarType nv)) e)
+  | Assign (e1, e2) -> let nv1 : string = nouvelle_var () in
+      let nv2 : string = nouvelle_var () in
+      let eq1 : equa = genere_equa e1 (RefType (VarType nv1)) e in
+      let eq2 : equa = genere_equa e2 (VarType nv2) e in
+      (ty, Unit)::(eq1 @ eq2)
 
 exception Echec_unif of string
 
@@ -162,6 +178,18 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | (_e1, (t3, NatType)::_e2) -> raise (Echec_unif ("type entier non-unifiable avec "^(print_type t3)))
     (* types liste des deux cotes : on passe *)
   | (e1, (ListType t1, ListType t2)::e2) -> unification (e1, (t1, t2)::e2) but
+    (* types liste à gauche pas à droite : échec *)
+  | (_e1, (ListType _, t3)::_e2) -> raise (Echec_unif ("type liste non-unifiable avec "^(print_type t3)))
+    (* types liste à droite pas à gauche : échec *)
+  | (_e1, (t3, ListType _)::_e2) -> raise (Echec_unif ("type liste non-unifiable avec "^(print_type t3)))
+    (* types ref des deux cotes : on passe *)
+  | (e1, (RefType t1, RefType t2)::e2) -> unification (e1, (t1, t2)::e2) but
+    (* types ref à gauche pas à droite : échec *)
+  | (_e1, (RefType _, t3)::_e2) -> raise (Echec_unif ("type ref non-unifiable avec "^(print_type t3)))
+    (* types ref à droite pas à gauche : échec *)
+  | (_e1, (t3, RefType _)::_e2) -> raise (Echec_unif ("type ref non-unifiable avec "^(print_type t3)))
+    (* types unit des deux cotes : on passe *)
+  | (e1, (Unit, Unit)::e2) -> unification (e1, e2) but
 
 (* enchaine generation d'equation et unification *)
 let inference (t : Common.pterm) : string =

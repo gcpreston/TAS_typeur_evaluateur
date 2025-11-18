@@ -16,8 +16,9 @@ type pterm = Var of string
   | IfEmpty of pterm * pterm * pterm
   (* let x = e1 in e2 *)
   | Let of string * pterm * pterm
-
-exception Echec_print of string
+  | Ref of pterm
+  | Deref of pterm
+  | Assign of pterm * pterm
 
 (* pretty printer de termes*)
 let rec print_term (t : pterm) : string =
@@ -35,15 +36,18 @@ let rec print_term (t : pterm) : string =
     | IfZero (c, t, f) -> "(ifzero " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
     | IfEmpty (c, t, f) -> "(ifempty " ^ (print_term c) ^ " " ^ (print_term t) ^ " " ^ (print_term f) ^ ")"
     | Let (x, e1, e2) -> "let " ^ x ^ " = " ^ (print_term e1) ^ " in " ^ (print_term e2)
+    | Ref e -> "ref " ^ (print_term e)
+    | Deref e -> "!" ^ (print_term e)
+    | Assign (e1, e2) -> (print_term e1) ^ " := " ^ (print_term e2)
 
 and print_list (l : pterm) : string =
   match l with
     | EmptyList -> "[]"
     | Cons (hd, tl) ->  "[" ^ (print_list_inner (Cons (hd, tl))) ^ "]"
-    | _ -> raise (Echec_print "print_list expected a Cons or EmptyList")
+    | _ -> print_term l
 
 and print_list_inner (l : pterm) : string =
   match l with
     | Cons (hd, EmptyList) -> print_term hd
     | Cons (hd, tl) -> print_term hd ^ ", " ^ print_list_inner tl
-    | _ -> raise (Echec_print "print_list_inner expected a Cons")
+    | _ -> print_term l

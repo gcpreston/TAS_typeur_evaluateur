@@ -40,6 +40,9 @@ alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
     | IfZero (c, t, f) -> IfZero (alpha_convert_helper c map, alpha_convert_helper t map, alpha_convert_helper f map)
     | IfEmpty (c, t, f) -> IfEmpty (alpha_convert_helper c map, alpha_convert_helper t map, alpha_convert_helper f map)
     | Let (x, e1, e2) -> Let (x, alpha_convert_helper e1 map, alpha_convert_helper e2 map)
+    | Ref m -> Ref (alpha_convert_helper m map)
+    | Deref m -> Deref (alpha_convert_helper m map)
+    | Assign (e1, e2) -> Assign (alpha_convert_helper e1 map, alpha_convert_helper e2 map)
 
 (* Substitue une variable par un terme dans un autre terme *)
 let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Common.pterm =
@@ -59,6 +62,9 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Comm
     | IfZero (c, t, f) -> IfZero (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
     | IfEmpty (c, t, f) -> IfEmpty (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
     | Let (x, e1, e2) -> Let (x, substitue_var e1 x t0, substitue_var e2 x t0)
+    | Ref m -> Ref (substitue_var m x t0)
+    | Deref m -> Deref (substitue_var m x t0)
+    | Assign (e1, e2) -> Assign (substitue_var e1 x t0, substitue_var e2 x t0)
 
 exception AppToNonAbs
 exception Echec_typage of string
@@ -112,3 +118,4 @@ let rec eval (t : Common.pterm) : Common.pterm =
         EmptyList -> eval t
         | _ -> eval f)
     | Let (x, e1, e2) -> eval (App (Abs (x, e2), e1)) (* TODO: This feels like it wants to be more complex lol *)
+    | _ -> failwith "Not implemented"

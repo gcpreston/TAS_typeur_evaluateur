@@ -35,6 +35,10 @@ let compteur_var : int ref = ref 0
 let nouvelle_var () : string = compteur_var := !compteur_var + 1;
   "T"^(string_of_int !compteur_var)
 
+let compteur_scheme_var : int ref = ref 0
+
+let nouvelle_scheme_var () : string = compteur_scheme_var := !compteur_scheme_var + 1;
+  "S"^(string_of_int !compteur_var)
 
 exception VarPasTrouve
 
@@ -93,7 +97,7 @@ let rec instantiate (scheme : ptype) : ptype =
     SchemeType ([], t) ->
       t
   | SchemeType (tv_head::tv_rest, t) ->
-      let nv : string = nouvelle_var () in
+      let nv : string = nouvelle_scheme_var () in
       let substituted = substitue_type t tv_head (VarType nv) in
       instantiate (SchemeType (tv_rest, substituted))
   | _ -> scheme
@@ -149,16 +153,15 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   | Let (x, e1, e2) -> let nv1 : string = nouvelle_var () in
       let nv2 : string = nouvelle_var () in
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
-      let eq2 : equa = genere_equa e2 (VarType nv2) ((x, generalize(VarType nv1))::e) in
+      let eq2 : equa = genere_equa e2 (VarType nv2) ((x, generalize (VarType nv1))::e) in
       (ty, (VarType nv2))::(eq1 @ eq2)
   | Ref m -> let nv : string = nouvelle_var () in
       (ty, RefType (VarType nv))::(genere_equa m (VarType nv) e)
   | Deref m -> let nv : string = nouvelle_var () in
       (ty, (VarType nv))::(genere_equa m (RefType (VarType nv)) e)
-  | Assign (e1, e2) -> let nv1 : string = nouvelle_var () in
-      (* let nv2 : string = nouvelle_var () in *)
-      let eq1 : equa = genere_equa e1 (RefType (VarType nv1)) e in
-      let eq2 : equa = genere_equa e2 (VarType nv1) e in
+  | Assign (e1, e2) -> let nv : string = nouvelle_var () in
+      let eq1 : equa = genere_equa e1 (RefType (VarType nv)) e in
+      let eq2 : equa = genere_equa e2 (VarType nv) e in
       (ty, Unit)::(eq1 @ eq2)
 
 exception Echec_unif of string

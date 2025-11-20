@@ -112,9 +112,9 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   | Deref m -> let nv : string = nouvelle_var () in
       (ty, (VarType nv))::(genere_equa m (RefType (VarType nv)) e)
   | Assign (e1, e2) -> let nv1 : string = nouvelle_var () in
-      let nv2 : string = nouvelle_var () in
+      (* let nv2 : string = nouvelle_var () in *)
       let eq1 : equa = genere_equa e1 (RefType (VarType nv1)) e in
-      let eq2 : equa = genere_equa e2 (VarType nv2) e in
+      let eq2 : equa = genere_equa e2 (VarType nv1) e in
       (ty, Unit)::(eq1 @ eq2)
 
 exception Echec_unif of string

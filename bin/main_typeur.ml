@@ -29,8 +29,8 @@ let ex_ifempty : Common.pterm = IfEmpty (EmptyList, N 5, N 10)
 let inf_ex_ifempty : string = Typeur.inference ex_ifempty
 let ex_let : Common.pterm = Let ("x", N 5, Add (Var "x", N 4))
 let inf_ex_let : string = Typeur.inference ex_let
-(* let ex_let_fail : Common.pterm = Let ("id", Abs ("x", Var "x"), App (Var "id", App (Var "id", N 5)))
-let inf_ex_let_fail : string = Typeur.inference ex_let_fail *)
+let ex_let_fail : Common.pterm = Let ("id", Abs ("x", Var "x"), IfEmpty (EmptyList, App (Var "id", N 5), App (Var "id", EmptyList)))
+let inf_ex_let_fail : string = Typeur.inference ex_let_fail
 let ex_ref : Common.pterm = Let ("x", Ref EmptyList, Cons (N 1, Deref (Var "x")))
 let inf_ex_ref : string = Typeur.inference ex_ref
 let ex_assign : Common.pterm = Let ("l", Ref EmptyList, Let ("_", Assign (Var "l", Cons (Abs ("x", Var "x"), EmptyList)), Add (Head (Deref (Var "l")), N 2)))
@@ -65,8 +65,8 @@ let main () =
   print_endline inf_ex_ifempty;
   print_endline "======================";
   print_endline inf_ex_let;
-  (* print_endline "======================";
-  print_endline inf_ex_let_fail *)
+  print_endline "======================";
+  print_endline inf_ex_let_fail;
   print_endline "======================";
   print_endline inf_ex_ref;
   print_endline "======================";

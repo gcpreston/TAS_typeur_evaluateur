@@ -5,6 +5,7 @@ type ptype = VarType of string
   | ListType of ptype
   | Unit
   | RefType of ptype
+  | SchemeType of string list * ptype
 
 (* Environnements de typage *)
 type env = (string * ptype) list
@@ -21,6 +22,12 @@ let rec print_type (t : ptype) : string =
   | ListType lt -> "[" ^ (print_type lt) ^ "]"
   | Unit -> "()"
   | RefType t -> "(ref " ^ (print_type t) ^ ")"
+  | SchemeType (vars, e) -> (print_vars vars) ^ " . " ^ (print_type e)
+and print_vars (vars : string list) : string =
+  match vars with
+    [] -> ""
+  | v::[] -> v
+  | v::rest -> v ^ ", " ^ (print_vars rest)
 
 (* générateur de noms frais de variables de types *)
 let compteur_var : int ref = ref 0
@@ -56,16 +63,53 @@ let rec substitue_type (t : ptype) (v : string) (t0 : ptype) : ptype =
   | NatType -> NatType
   | ListType lt -> ListType (substitue_type lt v t0)
   | RefType t1 -> RefType (substitue_type t1 v t0)
+  | SchemeType (vars, e) -> SchemeType (vars, substitue_type e v t0)
   | Unit -> Unit
 
 (* remplace une variable par un type dans une liste d'équations*)
 let substitue_type_partout (e : equa) (v : string) (t0 : ptype) : equa =
   List.map (fun (x, y) -> (substitue_type x v t0, substitue_type y v t0)) e
 
+(* WISHLIST
+ https://courses.cs.cornell.edu/cs3110/2021sp/textbook/interp/letpoly.html
+ - generalize(context, environment, variable, type) -> scheme
+ - instantiate(scheme) -> type
+*)
+
+let rec variables_libres_helper (t : ptype) (acc : string list) : string list =
+  match t with
+    VarType v -> v::acc
+  | ArrowType (t1, t2) -> (variables_libres_helper t1 acc) @ (variables_libres_helper t2 acc)
+  | ListType lt -> variables_libres_helper lt acc
+  | RefType t1 -> variables_libres_helper t1 acc
+  | _ -> acc
+
+let variables_libres (t : ptype) : string list =
+  let all_vars = variables_libres_helper t [] in
+  List.sort_uniq compare all_vars
+
+let rec instantiate (scheme : ptype) : ptype =
+  match scheme with
+    SchemeType ([], t) ->
+      t
+  | SchemeType (tv_head::tv_rest, t) ->
+      let nv : string = nouvelle_var () in
+      let substituted = substitue_type t tv_head (VarType nv) in
+      instantiate (SchemeType (tv_rest, substituted))
+  | _ -> scheme
+
+let generalize (t : ptype) : ptype =
+  match t with
+    SchemeType (_, _) ->
+      t
+  | _ ->
+      let vars_libres = variables_libres t in
+      SchemeType (vars_libres, t)
+
 (* genere des equations de typage à partir d'un terme *)
 let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   match te with
-    Var v -> let tv : ptype = cherche_type v e in [(ty, tv)]
+    Var v -> let tv : ptype = instantiate (cherche_type v e) in [(ty, tv)]
   | App (t1, t2) -> let nv : string = nouvelle_var () in
       let eq1 : equa = genere_equa t1 (ArrowType (VarType nv, ty)) e in
       let eq2 : equa = genere_equa t2 (VarType nv) e in
@@ -105,7 +149,7 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   | Let (x, e1, e2) -> let nv1 : string = nouvelle_var () in
       let nv2 : string = nouvelle_var () in
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
-      let eq2 : equa = genere_equa e2 (VarType nv2) ((x, VarType nv1)::e) in
+      let eq2 : equa = genere_equa e2 (VarType nv2) ((x, generalize(VarType nv1))::e) in
       (ty, (VarType nv2))::(eq1 @ eq2)
   | Ref m -> let nv : string = nouvelle_var () in
       (ty, RefType (VarType nv))::(genere_equa m (VarType nv) e)
@@ -190,11 +234,15 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | (_e1, (t3, RefType _)::_e2) -> raise (Echec_unif ("type ref non-unifiable avec "^(print_type t3)))
     (* types unit des deux cotes : on passe *)
   | (e1, (Unit, Unit)::e2) -> unification (e1, e2) but
+    (* TODO *)
+    (* types scheme dans les équations : échec *)
+  | (_e1, (SchemeType _, t3)::_e2) -> raise (Echec_unif ("type scheme non-unifiable avec "^(print_type t3)))
+  | (_e1, (t3, SchemeType _)::_e2) -> raise (Echec_unif ("type scheme non-unifiable avec "^(print_type t3)))
 
 (* enchaine generation d'equation et unification *)
 let inference (t : Common.pterm) : string =
   let e : equa_zip = ([], genere_equa t (VarType "but") []) in
-  print_endline ("starting inference with " ^ (print_equa_zip e));
+  print_endline ("starting inference with " ^ (Common.print_term t) ^ ", equations: " ^ (print_equa_zip e));
   try (let res = unification e "but" in
        (Common.print_term t)^" ***TYPABLE*** avec le type "^(print_type res))
   with Echec_unif bla -> (Common.print_term t)^" ***PAS TYPABLE*** : "^bla

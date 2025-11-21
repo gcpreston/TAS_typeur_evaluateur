@@ -163,7 +163,10 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let eq1 : equa = genere_equa e1 (RefType (VarType nv)) e in
       let eq2 : equa = genere_equa e2 (VarType nv) e in
       (ty, Unit)::(eq1 @ eq2)
-  | Fix (_phi, _m) -> [] (* TODO *)
+  | Fix (phi, m) -> let nv_phi : string = nouvelle_var () in
+      let nv_m : string = nouvelle_var () in
+      let eq : equa = genere_equa m (VarType nv_m) ((phi, (VarType nv_phi))::e) in
+      (ty, (VarType nv_m))::eq
 
 exception Echec_unif of string
 

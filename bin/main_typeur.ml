@@ -35,6 +35,8 @@ let ex_ref : Common.pterm = Let ("x", Ref EmptyList, Cons (N 1, Deref (Var "x"))
 let inf_ex_ref : string = Typeur.inference ex_ref
 let ex_assign : Common.pterm = Let ("l", Ref EmptyList, Let ("_", Assign (Var "l", Cons (Abs ("x", Var "x"), EmptyList)), Add (Head (Deref (Var "l")), N 2)))
 let inf_ex_assign : string = Typeur.inference ex_assign
+let ex_fix : Common.pterm = Fix ("phi", Abs ("n", IfZero (Var "n", N 123, App (Var "phi", Sub (Var "n", N 1)))))
+let inf_ex_fix : string = Typeur.inference ex_fix
 
 let main () =
   print_endline "======================";
@@ -70,6 +72,8 @@ let main () =
   print_endline "======================";
   print_endline inf_ex_ref;
   print_endline "======================";
-  print_endline inf_ex_assign
+  print_endline inf_ex_assign;
+  print_endline "======================";
+  print_endline inf_ex_fix
 
 let _ = main ()

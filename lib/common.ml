@@ -19,6 +19,8 @@ type pterm = Var of string
   | Ref of pterm
   | Deref of pterm
   | Assign of pterm * pterm
+  (* Recusion *)
+  | Fix of string * pterm
 
 (* pretty printer de termes*)
 let rec print_term (t : pterm) : string =
@@ -39,6 +41,7 @@ let rec print_term (t : pterm) : string =
     | Ref e -> "ref " ^ (print_term e)
     | Deref e -> "!" ^ (print_term e)
     | Assign (e1, e2) -> (print_term e1) ^ " := " ^ (print_term e2)
+    | Fix (phi, m) -> "fix (" ^ phi ^ " -> " ^ (print_term m) ^ ")"
 
 and print_list (l : pterm) : string =
   match l with

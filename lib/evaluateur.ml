@@ -43,6 +43,9 @@ alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
     | Ref m -> Ref (alpha_convert_helper m map)
     | Deref m -> Deref (alpha_convert_helper m map)
     | Assign (e1, e2) -> Assign (alpha_convert_helper e1 map, alpha_convert_helper e2 map)
+    | Fix (phi, m) ->
+      let phi1 = nouvelle_var () in
+      Fix (phi1, alpha_convert_helper m ((phi, phi1)::map))
 
 (* Substitue une variable par un terme dans un autre terme *)
 let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Common.pterm =
@@ -65,6 +68,7 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) : Comm
     | Ref m -> Ref (substitue_var m x t0)
     | Deref m -> Deref (substitue_var m x t0)
     | Assign (e1, e2) -> Assign (substitue_var e1 x t0, substitue_var e2 x t0)
+    | Fix (phi, m) -> Fix (phi, substitue_var m x t0)
 
 exception AppToNonAbs
 exception Echec_typage of string
@@ -118,4 +122,5 @@ let rec eval (t : Common.pterm) : Common.pterm =
         EmptyList -> eval t
         | _ -> eval f)
     | Let (x, e1, e2) -> eval (App (Abs (x, e2), e1)) (* TODO: This feels like it wants to be more complex lol *)
+    | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
     | _ -> failwith "Not implemented"

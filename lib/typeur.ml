@@ -294,13 +294,20 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | _e1, (t3, SchemeType _) :: _e2 ->
       raise (Echec_unif ("type scheme non-unifiable avec " ^ print_type t3))
 
+type inference_result = Typable of ptype | PasTypable of string
+
 (* enchaine generation d'equation et unification *)
-let inference (t : Common.pterm) : string =
+let inference (t : Common.pterm) : inference_result =
   let e : equa_zip = ([], genere_equa t (VarType "but") []) in
   print_endline
     ("starting inference with " ^ Common.print_term t ^ ", equations: "
    ^ print_equa_zip e);
   try
     let res = unification e "but" in
-    Common.print_term t ^ " ***TYPABLE*** avec le type " ^ print_type res
-  with Echec_unif bla -> Common.print_term t ^ " ***PAS TYPABLE*** : " ^ bla
+    Typable res
+  with Echec_unif bla -> PasTypable bla
+
+let print_inference (t : Common.pterm) : string =
+  match inference t with
+    Typable res -> Common.print_term t ^ " ***TYPABLE*** avec le type " ^ (print_type res)
+    | PasTypable bla -> Common.print_term t ^ " ***PAS TYPABLE*** : " ^ bla

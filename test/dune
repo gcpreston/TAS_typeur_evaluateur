@@ -1,2 +1,4 @@
 (test
- (name test_typeur_evaluateur))
+ (name test_typeur)
+ (libraries typeur_evaluateur ounit2))
+ 

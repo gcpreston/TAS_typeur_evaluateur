@@ -5,13 +5,22 @@ let ex_id : Common.pterm = Abs ("x", Var "x")
 let inf_ex_id : string = Typeur.inference ex_id
 let ex_k : Common.pterm = Abs ("x", Abs ("y", Var "x"))
 let inf_ex_k : string = Typeur.inference ex_k
-let ex_s : Common.pterm = Abs ("x", Abs ("y", Abs ("z", App (App (Var "x", Var "z"), App (Var "y", Var "z")))))
+
+let ex_s : Common.pterm =
+  Abs
+    ( "x",
+      Abs ("y", Abs ("z", App (App (Var "x", Var "z"), App (Var "y", Var "z"))))
+    )
+
 let inf_ex_s : string = Typeur.inference ex_s
-let ex_nat1 : Common.pterm = App (Abs ("x", Add(Var "x", N 1)), N 3)
+let ex_nat1 : Common.pterm = App (Abs ("x", Add (Var "x", N 1)), N 3)
 let inf_ex_nat1 : string = Typeur.inference ex_nat1
-let ex_nat2 : Common.pterm = Abs ("x", Add( Var "x", Var "x"))
+let ex_nat2 : Common.pterm = Abs ("x", Add (Var "x", Var "x"))
 let inf_ex_nat2 : string = Typeur.inference ex_nat2
-let ex_omega : Common.pterm = App (Abs ("x", App (Var "x", Var "x")), Abs ("y", App (Var "y", Var "y")))
+
+let ex_omega : Common.pterm =
+  App (Abs ("x", App (Var "x", Var "x")), Abs ("y", App (Var "y", Var "y")))
+
 let inf_ex_omega : string = Typeur.inference ex_omega
 let ex_nat3 : Common.pterm = App (ex_nat2, ex_id)
 let inf_ex_nat3 : string = Typeur.inference ex_nat3
@@ -29,13 +38,33 @@ let ex_ifempty : Common.pterm = IfEmpty (EmptyList, N 5, N 10)
 let inf_ex_ifempty : string = Typeur.inference ex_ifempty
 let ex_let : Common.pterm = Let ("x", N 5, Add (Var "x", N 4))
 let inf_ex_let : string = Typeur.inference ex_let
-let ex_let_fail : Common.pterm = Let ("id", Abs ("x", Var "x"), IfEmpty (EmptyList, App (Var "id", N 5), App (Var "id", EmptyList)))
+
+let ex_let_fail : Common.pterm =
+  Let
+    ( "id",
+      Abs ("x", Var "x"),
+      IfEmpty (EmptyList, App (Var "id", N 5), App (Var "id", EmptyList)) )
+
 let inf_ex_let_fail : string = Typeur.inference ex_let_fail
 let ex_ref : Common.pterm = Let ("x", Ref EmptyList, Cons (N 1, Deref (Var "x")))
 let inf_ex_ref : string = Typeur.inference ex_ref
-let ex_assign : Common.pterm = Let ("l", Ref EmptyList, Let ("_", Assign (Var "l", Cons (Abs ("x", Var "x"), EmptyList)), Add (Head (Deref (Var "l")), N 2)))
+
+let ex_assign : Common.pterm =
+  Let
+    ( "l",
+      Ref EmptyList,
+      Let
+        ( "_",
+          Assign (Var "l", Cons (Abs ("x", Var "x"), EmptyList)),
+          Add (Head (Deref (Var "l")), N 2) ) )
+
 let inf_ex_assign : string = Typeur.inference ex_assign
-let ex_fix : Common.pterm = Fix ("phi", Abs ("n", IfZero (Var "n", N 123, App (Var "phi", Sub (Var "n", N 1)))))
+
+let ex_fix : Common.pterm =
+  Fix
+    ( "phi",
+      Abs ("n", IfZero (Var "n", N 123, App (Var "phi", Sub (Var "n", N 1)))) )
+
 let inf_ex_fix : string = Typeur.inference ex_fix
 
 let main () =

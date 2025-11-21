@@ -307,7 +307,11 @@ let inference (t : Common.pterm) : inference_result =
     Typable res
   with Echec_unif bla -> PasTypable bla
 
+let print_inference_result (i : inference_result) : string =
+  match i with
+  | Typable res -> "***TYPABLE*** avec le type " ^ print_type res
+  | PasTypable bla -> "***PAS TYPABLE*** : " ^ bla
+
 let print_inference (t : Common.pterm) : string =
-  match inference t with
-    Typable res -> Common.print_term t ^ " ***TYPABLE*** avec le type " ^ (print_type res)
-    | PasTypable bla -> Common.print_term t ^ " ***PAS TYPABLE*** : " ^ bla
+  let res = inference t in
+  Common.print_term t ^ " " ^ print_inference_result res

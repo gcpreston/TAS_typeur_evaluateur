@@ -298,6 +298,7 @@ type inference_result = Typable of ptype | PasTypable of string
 
 (* enchaine generation d'equation et unification *)
 let inference (t : Common.pterm) : inference_result =
+  compteur_var := 0;
   let e : equa_zip = ([], genere_equa t (VarType "but") []) in
   print_endline
     ("starting inference with " ^ Common.print_term t ^ ", equations: "

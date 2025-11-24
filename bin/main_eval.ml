@@ -52,6 +52,17 @@ let eval_ex_fix = Evaluateur.eval ex_fix
 let ex_ref : Common.pterm = Let ("r", Ref EmptyList, Deref (Var "r"))
 let eval_ex_ref = Evaluateur.eval ex_ref
 
+let ex_assign : Common.pterm =
+  Let
+    ( "l",
+      Ref EmptyList,
+      Let
+        ( "_",
+          Assign (Var "l", Cons (Abs ("x", Var "x"), EmptyList)),
+          Add (Head (Deref (Var "l")), N 2) ) )
+
+let eval_ex_assign = Evaluateur.eval ex_assign
+
 let main () =
   print_endline "Alpha-conversion";
   print_endline "======================";
@@ -74,6 +85,7 @@ let main () =
   print_endline (Common.print_term eval_ex_id_id_x);
   print_endline (Common.print_term eval_ex_let);
   print_endline (Common.print_term eval_ex_fix);
-  print_endline (Common.print_term eval_ex_ref)
+  print_endline (Common.print_term eval_ex_ref);
+  print_endline (Common.print_term eval_ex_assign)
 
 let _ = main ()

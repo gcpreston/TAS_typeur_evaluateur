@@ -9,6 +9,7 @@ let nouvelle_var () : string =
   "x" ^ string_of_int !compteur_var
 
 let compteur_var_adr : Common.address ref = ref 0
+
 let nouvelle_adresse () : Common.address =
   compteur_var_adr := !compteur_var_adr + 1;
   !compteur_var_adr
@@ -61,10 +62,10 @@ and alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
   | Deref m -> Deref (alpha_convert_helper m map)
   | Assign (e1, e2) ->
       Assign (alpha_convert_helper e1 map, alpha_convert_helper e2 map)
-  | Address adr -> Address adr
   | Fix (phi, m) ->
       let phi1 = nouvelle_var () in
       Fix (phi1, alpha_convert_helper m ((phi, phi1) :: map))
+  | e -> e
 
 (* Substitue une variable par un terme dans un autre terme *)
 let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) :
@@ -88,12 +89,12 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) :
       IfZero (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
   | IfEmpty (c, t, f) ->
       IfEmpty (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
-  | Let (x, e1, e2) -> Let (x, substitue_var e1 x t0, substitue_var e2 x t0)
+  | Let (_y, e1, e2) -> Let (x, substitue_var e1 x t0, substitue_var e2 x t0)
   | Ref m -> Ref (substitue_var m x t0)
   | Deref m -> Deref (substitue_var m x t0)
   | Assign (e1, e2) -> Assign (substitue_var e1 x t0, substitue_var e2 x t0)
-  | Address adr -> Address adr
   | Fix (phi, m) -> Fix (phi, substitue_var m x t0)
+  | e -> e
 
 exception AppToNonAbs
 exception Echec_typage of string
@@ -158,17 +159,31 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       | _ -> eval_with_mem f sigma)
   | Let (x, e1, e2) ->
       let t1 = eval_with_mem e1 sigma in
-      eval_with_mem (substitue_var e2 x t1) sigma
+      let s2 = substitue_var e2 x t1 in
+      eval_with_mem s2 sigma
   | Ref e ->
       let adr = nouvelle_adresse () in
       Hashtbl.add sigma adr (eval_with_mem e sigma);
       Address adr
   | Deref e -> (
-    match e with
-    | Address adr -> Hashtbl.find sigma adr
-    | t -> failwith ("Attempted to dereference non-Common.address: " ^ (Common.print_term t)))
+      match e with
+      | Address adr -> Hashtbl.find sigma adr
+      | t ->
+          failwith
+            ("Attempted to dereference non-address: " ^ Common.print_term t))
+  | Assign (e1, e2) -> (
+      let t1 = eval_with_mem e1 sigma in
+      match t1 with
+      | Address adr ->
+          let t2 = eval_with_mem e2 sigma in
+          Hashtbl.replace sigma adr t2;
+          Unit
+      | t ->
+          failwith ("Attempted to assign to non-address: " ^ Common.print_term t)
+      )
   | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
-  | _ -> failwith "Not implemented"
+  | Address adr -> Address adr
+  | Unit -> Unit
 
 (* IDEA
  - Ref e => create mem space; associate Common.address -> e; evaluate to Common.address

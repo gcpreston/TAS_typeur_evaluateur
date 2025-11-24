@@ -4,7 +4,7 @@ type ptype =
   | ArrowType of ptype * ptype
   | NatType
   | ListType of ptype
-  | Unit
+  | UnitType
   | RefType of ptype
   | SchemeType of string list * ptype
 
@@ -21,7 +21,7 @@ let rec print_type (t : ptype) : string =
   | ArrowType (t1, t2) -> "(" ^ print_type t1 ^ " -> " ^ print_type t2 ^ ")"
   | NatType -> "NatType"
   | ListType lt -> "[" ^ print_type lt ^ "]"
-  | Unit -> "()"
+  | UnitType -> "()"
   | RefType t -> "(ref " ^ print_type t ^ ")"
   | SchemeType (vars, e) -> print_vars vars ^ " . " ^ print_type e
 
@@ -73,7 +73,7 @@ let rec substitue_type (t : ptype) (v : string) (t0 : ptype) : ptype =
   | ListType lt -> ListType (substitue_type lt v t0)
   | RefType t1 -> RefType (substitue_type t1 v t0)
   | SchemeType (vars, e) -> SchemeType (vars, substitue_type e v t0)
-  | Unit -> Unit
+  | UnitType -> UnitType
 
 (* remplace une variable par un type dans une liste d'équations*)
 let substitue_type_partout (e : equa) (v : string) (t0 : ptype) : equa =
@@ -184,8 +184,7 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let nv : string = nouvelle_var () in
       let eq1 : equa = genere_equa e1 (RefType (VarType nv)) e in
       let eq2 : equa = genere_equa e2 (VarType nv) e in
-      (ty, Unit) :: (eq1 @ eq2)
-  | Address _adr -> failwith "Address is not part of the constructable language"
+      (ty, UnitType) :: (eq1 @ eq2)
   | Fix (phi, m) ->
       let nv_phi : string = nouvelle_var () in
       let nv_m : string = nouvelle_var () in
@@ -193,6 +192,10 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
         genere_equa m (VarType nv_m) ((phi, VarType nv_phi) :: e)
       in
       (ty, VarType nv_m) :: eq
+  | t ->
+      failwith
+        ("Encountered term not part of the constructable language: "
+       ^ Common.print_term t)
 
 exception Echec_unif of string
 
@@ -286,7 +289,7 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | _e1, (t3, RefType _) :: _e2 ->
       raise (Echec_unif ("type ref non-unifiable avec " ^ print_type t3))
       (* types unit des deux cotes : on passe *)
-  | e1, (Unit, Unit) :: e2 ->
+  | e1, (UnitType, UnitType) :: e2 ->
       unification (e1, e2) but
       (* TODO *)
       (* types scheme dans les équations : échec *)

@@ -23,6 +23,7 @@ type pterm =
   | Deref of pterm
   | Assign of pterm * pterm
   | Address of address
+  | Unit
   (* Recusion *)
   | Fix of string * pterm
 
@@ -48,7 +49,8 @@ let rec print_term (t : pterm) : string =
   | Ref e -> "ref " ^ print_term e
   | Deref e -> "!" ^ print_term e
   | Assign (e1, e2) -> print_term e1 ^ " := " ^ print_term e2
-  | Address adr -> "adr " ^ (string_of_int adr)
+  | Address adr -> "adr " ^ string_of_int adr
+  | Unit -> "()"
   | Fix (phi, m) -> "fix (" ^ phi ^ " -> " ^ print_term m ^ ")"
 
 and print_list (l : pterm) : string =

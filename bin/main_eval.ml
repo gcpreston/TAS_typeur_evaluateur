@@ -49,6 +49,8 @@ let ex_fix : Common.pterm =
       N 3 )
 
 let eval_ex_fix = Evaluateur.eval ex_fix
+let ex_ref : Common.pterm = Let ("r", Ref EmptyList, Deref (Var "r"))
+let eval_ex_ref = Evaluateur.eval ex_ref
 
 let main () =
   print_endline "Alpha-conversion";
@@ -71,6 +73,7 @@ let main () =
   print_endline (Common.print_term eval_ex_id_k);
   print_endline (Common.print_term eval_ex_id_id_x);
   print_endline (Common.print_term eval_ex_let);
-  print_endline (Common.print_term eval_ex_fix)
+  print_endline (Common.print_term eval_ex_fix);
+  print_endline (Common.print_term eval_ex_ref)
 
 let _ = main ()

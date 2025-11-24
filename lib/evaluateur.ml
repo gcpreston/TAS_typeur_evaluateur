@@ -8,6 +8,11 @@ let nouvelle_var () : string =
   compteur_var := !compteur_var + 1;
   "x" ^ string_of_int !compteur_var
 
+let compteur_var_adr : Common.address ref = ref 0
+let nouvelle_adresse () : Common.address =
+  compteur_var_adr := !compteur_var_adr + 1;
+  !compteur_var_adr
+
 exception VarPasTrouve
 
 (* cherche le nouveau nom d'une variable dans un mapping *)
@@ -56,6 +61,7 @@ and alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
   | Deref m -> Deref (alpha_convert_helper m map)
   | Assign (e1, e2) ->
       Assign (alpha_convert_helper e1 map, alpha_convert_helper e2 map)
+  | Address adr -> Address adr
   | Fix (phi, m) ->
       let phi1 = nouvelle_var () in
       Fix (phi1, alpha_convert_helper m ((phi, phi1) :: map))
@@ -86,6 +92,7 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) :
   | Ref m -> Ref (substitue_var m x t0)
   | Deref m -> Deref (substitue_var m x t0)
   | Assign (e1, e2) -> Assign (substitue_var e1 x t0, substitue_var e2 x t0)
+  | Address adr -> Address adr
   | Fix (phi, m) -> Fix (phi, substitue_var m x t0)
 
 exception AppToNonAbs
@@ -95,55 +102,80 @@ exception Echec_typage of string
 
 (* TODO: Have outer wrapper to call alpha_convert first *)
 
+type mem = (int, Common.pterm) Hashtbl.t
+
 (* Evaluateur left-to-right, call-by-value *)
-let rec eval (t : Common.pterm) : Common.pterm =
-  print_endline ("eval " ^ Common.print_term t);
+let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
+  print_endline ("eval_with_mem " ^ Common.print_term t);
   match t with
-  | Var x -> Var x
-  | Abs (x, u) -> Abs (x, eval u)
+  | Var x -> Var x (* TODO: What should this give if x refers to a ref? *)
+  | Abs (x, u) -> Abs (x, eval_with_mem u sigma)
   | App (m, n) -> (
-      let m_val = eval m in
-      let n_val = eval n in
+      let m_val = eval_with_mem m sigma in
+      let n_val = eval_with_mem n sigma in
       match m_val with
-      | Abs (x, m_prime) -> eval (substitue_var m_prime x n_val)
+      | Abs (x, m_prime) -> eval_with_mem (substitue_var m_prime x n_val) sigma
       | e -> e
       (* | _ -> raise AppToNonAbs *))
   | N i -> N i
   | Add (t1, t2) -> (
-      match (eval t1, eval t2) with
+      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
       | N n1, N n2 -> N (n1 + n2)
       | t3, t4 ->
           Add (t3, t4)
           (* | (r1, r2) -> raise (Echec_typage ("typing error on + applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
   | Sub (t1, t2) -> (
-      match (eval t1, eval t2) with
+      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
       | N n1, N n2 -> N (n1 - n2)
       | t3, t4 ->
           Sub (t3, t4)
           (* | (r1, r2) -> raise (Echec_typage ("typing error on - applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
   | EmptyList -> EmptyList
-  | Cons (hd, tl) -> Cons (eval hd, eval tl)
+  | Cons (hd, tl) -> Cons (eval_with_mem hd sigma, eval_with_mem tl sigma)
   | Head l -> (
-      match eval l with
+      match eval_with_mem l sigma with
       | Cons (hd, _tl) -> hd
       | t ->
           t
           (* | _ -> raise (Echec_typage ("typing error on head applied to " ^ (Common.print_term l)))) *)
       )
   | Tail l -> (
-      match eval l with
+      match eval_with_mem l sigma with
       | Cons (_hd, tl) -> tl
       | t ->
           t
           (* | _ -> raise (Echec_typage ("typing error on tail applied to " ^ (Common.print_term l)))) *)
       )
-  | IfZero (c, t, f) -> ( match eval c with N 0 -> eval t | _ -> eval f)
+  | IfZero (c, t, f) -> (
+      match eval_with_mem c sigma with
+      | N 0 -> eval_with_mem t sigma
+      | _ -> eval_with_mem f sigma)
   | IfEmpty (c, t, f) -> (
-      match eval c with EmptyList -> eval t | _ -> eval f)
+      match eval_with_mem c sigma with
+      | EmptyList -> eval_with_mem t sigma
+      | _ -> eval_with_mem f sigma)
   | Let (x, e1, e2) ->
-      eval (App (Abs (x, e2), e1))
-      (* TODO: This feels like it wants to be more complex lol *)
+      let t1 = eval_with_mem e1 sigma in
+      eval_with_mem (substitue_var e2 x t1) sigma
+  | Ref e ->
+      let adr = nouvelle_adresse () in
+      Hashtbl.add sigma adr (eval_with_mem e sigma);
+      Address adr
+  | Deref e -> (
+    match e with
+    | Address adr -> Hashtbl.find sigma adr
+    | t -> failwith ("Attempted to dereference non-Common.address: " ^ (Common.print_term t)))
   | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
   | _ -> failwith "Not implemented"
+
+(* IDEA
+ - Ref e => create mem space; associate Common.address -> e; evaluate to Common.address
+ -
+*)
+
+let eval (t : Common.pterm) =
+  (* let t1 = alpha_convert t in *)
+  let sigma : mem = Hashtbl.create 123 in
+  eval_with_mem t sigma

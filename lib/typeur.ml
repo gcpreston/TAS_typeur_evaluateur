@@ -124,7 +124,7 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let nv : string = nouvelle_var () in
       let eq1 : equa = genere_equa t1 (ArrowType (VarType nv, ty)) e in
       let eq2 : equa = genere_equa t2 (VarType nv) e in
-      eq1 @ eq2
+      (ty, VarType nv) :: (eq1 @ eq2)
   | Abs (x, t) ->
       let nv1 : string = nouvelle_var () and nv2 : string = nouvelle_var () in
       (ty, ArrowType (VarType nv1, VarType nv2))
@@ -168,12 +168,11 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       (ty, VarType nv2) :: (eqc @ eqt @ eqf)
   | Let (x, e1, e2) ->
       let nv1 : string = nouvelle_var () in
-      let nv2 : string = nouvelle_var () in
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
       let eq2 : equa =
-        genere_equa e2 (VarType nv2) ((x, generalize (VarType nv1)) :: e)
+        genere_equa e2 ty ((x, generalize (VarType nv1)) :: e)
       in
-      (ty, VarType nv2) :: (eq1 @ eq2)
+      eq1 @ eq2
   | Ref m ->
       let nv : string = nouvelle_var () in
       (ty, RefType (VarType nv)) :: genere_equa m (VarType nv) e

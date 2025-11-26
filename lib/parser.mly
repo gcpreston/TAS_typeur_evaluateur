@@ -15,6 +15,7 @@
 %token LET EQUAL IN
 %token REF DEREF
 %token ASSIGN
+%token EOF
 
 %type <Common.pterm> expr
 %type <Common.pterm> prog
@@ -22,7 +23,7 @@
 %start prog
 
 %%
-prog: LPAR expr RPAR          { $2 }
+prog: expr EOF                { $1 }
 ;
 
 expr:

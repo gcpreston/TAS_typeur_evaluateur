@@ -39,6 +39,14 @@ let inf_ex_ifempty : string = Typeur.print_inference ex_ifempty
 let ex_let : Common.pterm = Let ("x", N 5, Add (Var "x", N 4))
 let inf_ex_let : string = Typeur.print_inference ex_let
 
+let ex_let_poly : Common.pterm =
+  Let
+    ( "id",
+      Abs ("x", Var "x"),
+      Let ("_", App (Var "id", N 0), App (Var "id", EmptyList)) )
+
+let inf_ex_let_poly : string = Typeur.print_inference ex_let_poly
+
 let ex_let_fail : Common.pterm =
   Let
     ( "id",
@@ -96,6 +104,8 @@ let main () =
   print_endline inf_ex_ifempty;
   print_endline "======================";
   print_endline inf_ex_let;
+  print_endline "======================";
+  print_endline inf_ex_let_poly;
   print_endline "======================";
   print_endline inf_ex_let_fail;
   print_endline "======================";

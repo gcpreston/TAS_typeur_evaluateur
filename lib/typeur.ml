@@ -42,7 +42,7 @@ let compteur_scheme_var : int ref = ref 0
 
 let nouvelle_scheme_var () : string =
   compteur_scheme_var := !compteur_scheme_var + 1;
-  "S" ^ string_of_int !compteur_var
+  "S" ^ string_of_int !compteur_scheme_var
 
 exception VarPasTrouve
 
@@ -114,11 +114,21 @@ let generalize (t : ptype) : ptype =
       let vars_libres = variables_libres t in
       SchemeType (vars_libres, t)
 
+let is_value (e : Common.pterm) : bool =
+  match e with
+  | Var _ | N _ | Abs _ | EmptyList -> true
+  | App _ | Ref _ | Let _ | _ -> false
+(*
+    We do not generalize any terms which would involve recursive value checking
+    in order to mimic historical, simple-as-possible OCaml behavior.
+  *)
+
 (* genere des equations de typage à partir d'un terme *)
 let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   match te with
   | Var v ->
-      let tv : ptype = instantiate (cherche_type v e) in
+      let env_type = cherche_type v e in
+      let tv : ptype = instantiate env_type in
       [ (ty, tv) ]
   | App (t1, t2) ->
       let nv : string = nouvelle_var () in
@@ -169,9 +179,11 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
   | Let (x, e1, e2) ->
       let nv1 : string = nouvelle_var () in
       let eq1 : equa = genere_equa e1 (VarType nv1) e in
-      let eq2 : equa =
-        genere_equa e2 ty ((x, generalize (VarType nv1)) :: e)
+      (* Value restriction :: Weak polymorphism *)
+      let maybe_gen_nv1 =
+        if is_value e1 then generalize (VarType nv1) else VarType nv1
       in
+      let eq2 : equa = genere_equa e2 ty ((x, maybe_gen_nv1) :: e) in
       eq1 @ eq2
   | Ref m ->
       let nv : string = nouvelle_var () in

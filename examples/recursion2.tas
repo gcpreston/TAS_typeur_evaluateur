@@ -1,1 +1,2 @@
-(fix phi -> fun n -> ifz n 123 (phi (n - 1))) 3
+let f = (fix phi -> fun n -> ifz n 123 (phi (n - 1))) in
+f 3

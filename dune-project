@@ -19,7 +19,7 @@
  (name typeur_evaluateur)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml ounit2)
+ (depends ocaml ounit2 ocamllex menhir)
  (tags
   ("add topics" "to describe" your project)))
 

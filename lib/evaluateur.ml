@@ -108,7 +108,7 @@ type mem = (int, Common.pterm) Hashtbl.t
 
 (* Evaluateur left-to-right, call-by-value *)
 let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
-  print_endline ("eval_with_mem " ^ Common.print_term t);
+  (* print_endline ("eval_with_mem " ^ Common.print_term t); *)
   match t with
   | Var x -> Var x (* TODO: What should this give if x refers to a ref? *)
   | Abs (x, u) -> Abs (x, eval_with_mem u sigma)

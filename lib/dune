@@ -1,2 +1,7 @@
 (library
  (name typeur_evaluateur))
+
+(ocamllex lexer)
+
+(menhir
+ (modules parser))

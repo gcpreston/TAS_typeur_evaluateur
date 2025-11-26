@@ -108,15 +108,21 @@ type mem = (int, Common.pterm) Hashtbl.t
 
 (* Evaluateur left-to-right, call-by-value *)
 let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
-  (* print_endline ("eval_with_mem " ^ Common.print_term t); *)
+  print_endline ("eval_with_mem " ^ Common.print_term t);
   match t with
   | Var x -> Var x (* TODO: What should this give if x refers to a ref? *)
   | Abs (x, u) -> Abs (x, eval_with_mem u sigma)
   | App (m, n) -> (
       let m_val = eval_with_mem m sigma in
       let n_val = eval_with_mem n sigma in
+      (* print_endline ("m_val: " ^ Common.print_term m_val);
+      print_endline ("n_val: " ^ Common.print_term n_val); *)
       match m_val with
       | Abs (x, m_prime) -> eval_with_mem (substitue_var m_prime x n_val) sigma
+      | Fix (phi, Abs (x, m_prime)) ->
+          let s = substitue_var m_prime phi (Fix (phi, m_prime)) in
+          (* print_endline ("substituted: " ^ Common.print_term s); *)
+          eval_with_mem (substitue_var s x n_val) sigma
       | e -> e
       (* | _ -> raise AppToNonAbs *))
   | N i -> N i
@@ -159,14 +165,16 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       | EmptyList -> eval_with_mem t sigma
       | _ -> eval_with_mem f sigma)
   | Let (x, e1, e2) ->
-      let s2 = substitue_var e2 x e1 in
+      let t1 = eval_with_mem e1 sigma in
+      let s2 = substitue_var e2 x t1 in
+      (* print_endline ("evaluating s2: " ^ Common.print_term s2); *)
       eval_with_mem s2 sigma
   | Ref e ->
       let adr = nouvelle_adresse () in
       Hashtbl.add sigma adr (eval_with_mem e sigma);
       Address adr
   | Deref e -> (
-      match e with
+      match eval_with_mem e sigma with
       | Address adr -> Hashtbl.find sigma adr
       | t ->
           failwith
@@ -181,7 +189,7 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       | t ->
           failwith ("Attempted to assign to non-address: " ^ Common.print_term t)
       )
-  | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
+  | Fix (phi, m) -> Fix (phi, m)
   | Address adr -> Address adr
   | Unit -> Unit
 

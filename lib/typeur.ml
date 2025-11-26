@@ -242,7 +242,7 @@ let print_equa_zip (e : equa_zip) =
 
 (* résout un système d'équations *)
 let rec unification (e : equa_zip) (but : string) : ptype =
-  print_endline ("unification of " ^ print_equa_zip e);
+  (* print_endline ("unification of " ^ print_equa_zip e); *)
   match e with
   (* on a passé toutes les équations : succes *)
   | _, [] -> (
@@ -316,9 +316,9 @@ let inference (t : Common.pterm) : inference_result =
   compteur_var := 0;
   compteur_scheme_var := 0;
   let e : equa_zip = ([], genere_equa t (VarType "but") []) in
-  print_endline
+  (* print_endline
     ("starting inference with " ^ Common.print_term t ^ ", equations: "
-   ^ print_equa_zip e);
+   ^ print_equa_zip e); *)
   try
     let res = unification e "but" in
     Typable res

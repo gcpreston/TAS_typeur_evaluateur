@@ -44,12 +44,12 @@ let nouvelle_scheme_var () : string =
   compteur_scheme_var := !compteur_scheme_var + 1;
   "S" ^ string_of_int !compteur_scheme_var
 
-exception VarPasTrouve
+exception VarPasTrouve of string
 
 (* cherche le type d'une variable dans un environnement *)
 let rec cherche_type (v : string) (e : env) : ptype =
   match e with
-  | [] -> raise VarPasTrouve
+  | [] -> raise (VarPasTrouve v)
   | (v1, t1) :: _q when v1 = v -> t1
   | (_, _) :: q -> cherche_type v q
 
@@ -225,7 +225,7 @@ let substitue_type_zip (e : equa_zip) (v : string) (t0 : ptype) : equa_zip =
 (* trouve un type associé à une variable dans un zipper d'équation *)
 let rec trouve_but (e : equa_zip) (but : string) =
   match e with
-  | _, [] -> raise VarPasTrouve
+  | _, [] -> raise (VarPasTrouve but)
   | _, (VarType v, t) :: _ when v = but -> t
   | _, (t, VarType v) :: _ when v = but -> t
   | e1, c :: e2 -> trouve_but (c :: e1, e2) but
@@ -247,7 +247,7 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   (* on a passé toutes les équations : succes *)
   | _, [] -> (
       try trouve_but (rembobine e) but
-      with VarPasTrouve ->
+      with (VarPasTrouve _) ->
         raise (Echec_unif "but pas trouvé") (* equation avec but : on passe *))
   | e1, (VarType v1, t2) :: e2 when v1 = but ->
       unification ((VarType v1, t2) :: e1, e2) but

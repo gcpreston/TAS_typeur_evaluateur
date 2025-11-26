@@ -57,7 +57,8 @@ and alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
           alpha_convert_helper t map,
           alpha_convert_helper f map )
   | Let (x, e1, e2) ->
-      Let (x, alpha_convert_helper e1 map, alpha_convert_helper e2 map)
+      let x1 = nouvelle_var () in
+      Let (x1, alpha_convert_helper e1 map, alpha_convert_helper e2 ((x, x1) :: map))
   | Ref m -> Ref (alpha_convert_helper m map)
   | Deref m -> Deref (alpha_convert_helper m map)
   | Assign (e1, e2) ->
@@ -185,12 +186,9 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
   | Address adr -> Address adr
   | Unit -> Unit
 
-(* IDEA
- - Ref e => create mem space; associate Common.address -> e; evaluate to Common.address
- -
-*)
-
 let eval (t : Common.pterm) =
-  (* let t1 = alpha_convert t in *)
+  compteur_var := 0;
+  compteur_var_adr := 0;
+  let t1 = alpha_convert t in
   let sigma : mem = Hashtbl.create 123 in
-  eval_with_mem t sigma
+  eval_with_mem t1 sigma

@@ -5,7 +5,7 @@ let eval_test_failure (res : Common.pterm) =
   assert_bool (Common.print_term res) false
 
 let ex_id : Common.pterm = Abs ("x", Var "x")
-let ex_id_id_x : Common.pterm = App (ex_id, App (ex_id, Var "x"))
+let ex_id_id_5 : Common.pterm = App (ex_id, App (ex_id, N 5))
 let ex_let : Common.pterm = Let ("x", Add (N 1, N 2), Add (Var "x", N 10))
 
 let ex_fix : Common.pterm =
@@ -35,12 +35,12 @@ let assert_eval (term : Common.pterm) (expected : Common.pterm) =
     eval_test_failure result
 
 let eval_expectations : (string * Common.pterm * Common.pterm) list = [
-  ("test_id", ex_id, Abs ("x", Var "x"));
-  ("test_id_id_x", ex_id_id_x, Var "x");
+  ("test_id", ex_id, Abs ("x1", Var "x1"));
+  ("test_id_id_5", ex_id_id_5, N 5);
   ("test_let", ex_let, N 13);
   ("test_fix", ex_fix, N 123);
   ("test_ref", ex_ref, EmptyList);
-  ("test_assign", ex_assign, Add (Abs ("x", Var "x"), N 2));
+  ("test_assign", ex_assign, Add (Abs ("x3", Var "x3"), N 2));
 ]
 
 let expectation_to_test (tup : string * Common.pterm * Common.pterm) =

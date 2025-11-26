@@ -35,8 +35,8 @@ let eval_ex_add_2_3 = Evaluateur.eval ex_add_2_3 *)
 (* let ex_delta : Common.pterm = Abs ("x", App (Var "x", Var "x"))
 let ex_delta_delta : Common.pterm = App (ex_delta, ex_delta)
 let eval_ex_delta_delta = Evaluateur.eval ex_delta_delta *)
-let ex_id_id_x : Common.pterm = App (ex_id, App (ex_id, Var "x"))
-let eval_ex_id_id_x = Evaluateur.eval ex_id_id_x
+let ex_id_id_5 : Common.pterm = App (ex_id, App (ex_id, N 5))
+let eval_ex_id_id_5 = Evaluateur.eval ex_id_id_5
 let ex_let : Common.pterm = Let ("x", Add (N 1, N 2), Add (Var "x", N 10))
 let eval_ex_let = Evaluateur.eval ex_let
 
@@ -73,6 +73,8 @@ let main () =
   print_endline (Common.print_term conv_ex_s);
   print_endline "======================";
   print_endline (Common.print_term conv_ex_relink);
+  (* print_endline "======================";
+  print_endline (Common.print_term (Evaluateur.alpha_convert ex_ref)); *)
   print_endline "";
   print_endline "Substitution";
   print_endline "======================";
@@ -82,7 +84,7 @@ let main () =
   print_endline "======================";
   (* print_endline (Common.print_term eval_ex_add_2_3); *)
   print_endline (Common.print_term eval_ex_id_k);
-  print_endline (Common.print_term eval_ex_id_id_x);
+  print_endline (Common.print_term eval_ex_id_id_5);
   print_endline (Common.print_term eval_ex_let);
   print_endline (Common.print_term eval_ex_fix);
   print_endline (Common.print_term eval_ex_ref);

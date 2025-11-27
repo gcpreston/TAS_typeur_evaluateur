@@ -29,22 +29,20 @@ let ex_assign : Common.pterm =
 
 let assert_eval (term : Common.pterm) (expected : Common.pterm) =
   let result = Evaluateur.eval term in
-  if result = expected then
-    ()
-  else
-    eval_test_failure result
+  if result = expected then () else eval_test_failure result
 
-let eval_expectations : (string * Common.pterm * Common.pterm) list = [
-  ("test_id", ex_id, Abs ("x1", Var "x1"));
-  ("test_id_id_5", ex_id_id_5, N 5);
-  ("test_let", ex_let, N 13);
-  ("test_fix", ex_fix, N 123);
-  ("test_ref", ex_ref, EmptyList);
-  ("test_assign", ex_assign, Add (Abs ("x3", Var "x3"), N 2));
-]
+let eval_expectations : (string * Common.pterm * Common.pterm) list =
+  [
+    ("test_id", ex_id, Abs ("x1", Var "x1"));
+    ("test_id_id_5", ex_id_id_5, N 5);
+    ("test_let", ex_let, N 13);
+    ("test_fix", ex_fix, N 123);
+    ("test_ref", ex_ref, EmptyList);
+    ("test_assign", ex_assign, Add (Abs ("x3", Var "x3"), N 2));
+  ]
 
 let expectation_to_test (tup : string * Common.pterm * Common.pterm) =
-  let (name, term, expected) = tup in
+  let name, term, expected = tup in
   name >:: fun _ -> assert_eval term expected
 
 let evaluateur_tests = List.map expectation_to_test eval_expectations
@@ -55,5 +53,4 @@ let evaluateur_tests = List.map expectation_to_test eval_expectations
 let suite = "EvaluateurTests" >::: evaluateur_tests
 
 (* Run the test suite. *)
-let () =
-  run_test_tt_main suite
+let () = run_test_tt_main suite

@@ -1,0 +1,1 @@
+(fix phi -> fun n -> ifz n 123 (phi (n - 1))) 3

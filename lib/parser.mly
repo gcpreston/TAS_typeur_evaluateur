@@ -6,7 +6,7 @@
 %token <int> NUM
 %token <string> IDENT
 %token LPAR RPAR
-%token PLUS MINUS
+%token PLUS MINUS TIMES
 %token FUN ARROW
 %token FIX
 %token IFEMPTY IFZERO
@@ -35,7 +35,8 @@ expr:
 | IFEMPTY expr expr expr      { IfEmpty ($2, $3, $4) }
 | IFZERO expr expr expr       { IfZero ($2, $3, $4) }
 | expr PLUS expr              { Add ($1, $3) }
-| expr MINUS expr              { Sub ($1, $3) }
+| expr MINUS expr             { Sub ($1, $3) }
+| expr TIMES expr             { Mult ($1, $3) }
 | EMPTYLIST                   { EmptyList }
 | CONS expr expr              { Cons ($2, $3) }
 | HEAD expr                   { Head $2 }

@@ -1,0 +1,11 @@
+let count = ref 0 in
+let loop =
+  fix f ->
+    fun n ->
+      ifz n
+        0
+        (let _ = count := ((!count) + 1) in
+        f (n - 1))
+in
+let _ = loop 5 in
+!count

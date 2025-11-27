@@ -9,6 +9,7 @@ type pterm =
   | N of int
   | Add of pterm * pterm
   | Sub of pterm * pterm
+  | Mult of pterm * pterm
   (* Lists and List operations *)
   | EmptyList
   | Cons of pterm * pterm
@@ -36,6 +37,7 @@ let rec print_term (t : pterm) : string =
   | N n -> string_of_int n
   | Add (t1, t2) -> "(" ^ print_term t1 ^ " + " ^ print_term t2 ^ ")"
   | Sub (t1, t2) -> "(" ^ print_term t1 ^ " - " ^ print_term t2 ^ ")"
+  | Mult (t1, t2) -> "(" ^ print_term t1 ^ " * " ^ print_term t2 ^ ")"
   | EmptyList -> print_list EmptyList
   | Cons (hd, tl) -> print_list (Cons (hd, tl))
   | Head l -> "(hd " ^ print_list l ^ ")"

@@ -9,6 +9,7 @@ rule token = parse
   | ')'              { RPAR }
   | '+'              { PLUS }
   | '-'              { MINUS }
+  | '*'              { TIMES }
   | "->"             { ARROW }
   | "fun"            { FUN }
   | "fix"            { FIX }
@@ -26,6 +27,6 @@ rule token = parse
   | ":="             { ASSIGN }
 
   | ('-')?['0'-'9']+('.'['0'-'9'])? as lxm { NUM(int_of_string lxm) }
-  | ['a'-'z']['a'-'z''A'-'Z''0'-'9']* as lxm { IDENT(lxm) }
+  | ['a'-'z''_']['a'-'z''A'-'Z''0'-'9''_']* as lxm { IDENT(lxm) }
 
   | eof              { EOF }

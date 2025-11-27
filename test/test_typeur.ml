@@ -51,34 +51,43 @@ let ex_fix : Common.pterm =
 
 let assert_type (term : Common.pterm) (expected : Typeur.inference_result) =
   let result = Typeur.inference term in
-  if result = expected then
-    ()
-  else
-    inference_test_failure result
+  if result = expected then () else inference_test_failure result
 
-let type_inferences_expectations : (string * Common.pterm * Typeur.inference_result) list = [
-  ("test_id", ex_id, Typable (ArrowType (VarType "T2", VarType "T2")));
-  ("test_k", ex_k, Typable (ArrowType (VarType "T4", ArrowType (VarType "T3", VarType "T4"))));
-  ("test_nat1", ex_nat1,  Typable NatType);
-  ("test_nat2", ex_nat2, Typable (ArrowType (NatType, NatType)));
-  ("test_omega", ex_omega, PasTypable "occurence de T3 dans (T3 -> T3)");
-  ("test_nat3", ex_nat3, PasTypable "type fleche non-unifiable avec NatType");
-  ("test_lst1", ex_lst1, Typable (ListType (VarType "T1")));
-  ("test_hd", ex_hd, Typable NatType);
-  ("test_tl", ex_tl, Typable (ListType NatType));
-  ("test_ifzero", ex_ifzero, Typable (ListType (VarType "T2")));
-  ("test_ifzero_fail", ex_ifzero_fail, PasTypable "type entier non-unifiable avec [T2]");
-  ("test_ifempty", ex_ifempty, Typable NatType);
-  ("test_let", ex_let, Typable NatType);
-  ("test_let_poly", ex_let_poly, Typable (ListType (VarType "T7")));
-  ("test_let_fail", ex_let_fail, PasTypable "type entier non-unifiable avec [T9]");
-  ("test_ref", ex_ref, Typable (ListType NatType));
-  ("test_assign_fail", ex_assign_fail, (PasTypable "type fleche non-unifiable avec NatType"));
-  ("test_fix", ex_fix, (Typable (ArrowType (NatType, NatType))));
-]
+let type_inferences_expectations :
+    (string * Common.pterm * Typeur.inference_result) list =
+  [
+    ("test_id", ex_id, Typable (ArrowType (VarType "T2", VarType "T2")));
+    ( "test_k",
+      ex_k,
+      Typable (ArrowType (VarType "T4", ArrowType (VarType "T3", VarType "T4")))
+    );
+    ("test_nat1", ex_nat1, Typable NatType);
+    ("test_nat2", ex_nat2, Typable (ArrowType (NatType, NatType)));
+    ("test_omega", ex_omega, PasTypable "occurence de T3 dans (T3 -> T3)");
+    ("test_nat3", ex_nat3, PasTypable "type fleche non-unifiable avec NatType");
+    ("test_lst1", ex_lst1, Typable (ListType (VarType "T1")));
+    ("test_hd", ex_hd, Typable NatType);
+    ("test_tl", ex_tl, Typable (ListType NatType));
+    ("test_ifzero", ex_ifzero, Typable (ListType (VarType "T2")));
+    ( "test_ifzero_fail",
+      ex_ifzero_fail,
+      PasTypable "type entier non-unifiable avec [T2]" );
+    ("test_ifempty", ex_ifempty, Typable NatType);
+    ("test_let", ex_let, Typable NatType);
+    ("test_let_poly", ex_let_poly, Typable (ListType (VarType "T7")));
+    ( "test_let_fail",
+      ex_let_fail,
+      PasTypable "type entier non-unifiable avec [T9]" );
+    ("test_ref", ex_ref, Typable (ListType NatType));
+    ( "test_assign_fail",
+      ex_assign_fail,
+      PasTypable "type fleche non-unifiable avec NatType" );
+    ("test_fix", ex_fix, Typable (ArrowType (NatType, NatType)));
+  ]
 
-let expectation_to_test (tup : string * Common.pterm * Typeur.inference_result) =
-  let (name, term, expected) = tup in
+let expectation_to_test (tup : string * Common.pterm * Typeur.inference_result)
+    =
+  let name, term, expected = tup in
   name >:: fun _ -> assert_type term expected
 
 let typeur_tests = List.map expectation_to_test type_inferences_expectations
@@ -89,5 +98,4 @@ let typeur_tests = List.map expectation_to_test type_inferences_expectations
 let suite = "TypeurTests" >::: typeur_tests
 
 (* Run the test suite. *)
-let () =
-  run_test_tt_main suite
+let () = run_test_tt_main suite

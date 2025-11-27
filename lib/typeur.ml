@@ -148,6 +148,10 @@ let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
       let eq1 : equa = genere_equa t1 NatType e in
       let eq2 : equa = genere_equa t2 NatType e in
       (ty, NatType) :: (eq1 @ eq2)
+  | Mult (t1, t2) ->
+      let eq1 : equa = genere_equa t1 NatType e in
+      let eq2 : equa = genere_equa t2 NatType e in
+      (ty, NatType) :: (eq1 @ eq2)
   | EmptyList ->
       let nv : string = nouvelle_var () in
       [ (ty, ListType (VarType nv)) ]
@@ -247,7 +251,7 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   (* on a passé toutes les équations : succes *)
   | _, [] -> (
       try trouve_but (rembobine e) but
-      with (VarPasTrouve _) ->
+      with VarPasTrouve _ ->
         raise (Echec_unif "but pas trouvé") (* equation avec but : on passe *))
   | e1, (VarType v1, t2) :: e2 when v1 = but ->
       unification ((VarType v1, t2) :: e1, e2) but

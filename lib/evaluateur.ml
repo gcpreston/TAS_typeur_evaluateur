@@ -41,6 +41,8 @@ and alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
       Add (alpha_convert_helper t1 map, alpha_convert_helper t2 map)
   | Sub (t1, t2) ->
       Sub (alpha_convert_helper t1 map, alpha_convert_helper t2 map)
+  | Mult (t1, t2) ->
+      Mult (alpha_convert_helper t1 map, alpha_convert_helper t2 map)
   | EmptyList -> EmptyList
   | Cons (hd, tl) ->
       Cons (alpha_convert_helper hd map, alpha_convert_helper tl map)
@@ -58,7 +60,10 @@ and alpha_convert_helper (t : Common.pterm) (map : mapping) : Common.pterm =
           alpha_convert_helper f map )
   | Let (x, e1, e2) ->
       let x1 = nouvelle_var () in
-      Let (x1, alpha_convert_helper e1 map, alpha_convert_helper e2 ((x, x1) :: map))
+      Let
+        ( x1,
+          alpha_convert_helper e1 map,
+          alpha_convert_helper e2 ((x, x1) :: map) )
   | Ref m -> Ref (alpha_convert_helper m map)
   | Deref m -> Deref (alpha_convert_helper m map)
   | Assign (e1, e2) ->
@@ -82,6 +87,7 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) :
   | N i -> N i
   | Add (t1, t2) -> Add (substitue_var t1 x t0, substitue_var t2 x t0)
   | Sub (t1, t2) -> Sub (substitue_var t1 x t0, substitue_var t2 x t0)
+  | Mult (t1, t2) -> Mult (substitue_var t1 x t0, substitue_var t2 x t0)
   | EmptyList -> EmptyList
   | Cons (hd, tl) -> Cons (substitue_var hd x t0, substitue_var tl x t0)
   | Head l -> Head (substitue_var l x t0)
@@ -90,7 +96,7 @@ let rec substitue_var (t : Common.pterm) (x : string) (t0 : Common.pterm) :
       IfZero (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
   | IfEmpty (c, t, f) ->
       IfEmpty (substitue_var c x t0, substitue_var t x t0, substitue_var f x t0)
-  | Let (_y, e1, e2) -> Let (x, substitue_var e1 x t0, substitue_var e2 x t0)
+  | Let (y, e1, e2) -> Let (y, substitue_var e1 x t0, substitue_var e2 x t0)
   | Ref m -> Ref (substitue_var m x t0)
   | Deref m -> Deref (substitue_var m x t0)
   | Assign (e1, e2) -> Assign (substitue_var e1 x t0, substitue_var e2 x t0)
@@ -108,10 +114,10 @@ type mem = (int, Common.pterm) Hashtbl.t
 
 (* Evaluateur left-to-right, call-by-value *)
 let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
-  print_endline ("eval_with_mem " ^ Common.print_term t);
+  (* print_endline ("eval_with_mem " ^ Common.print_term t); *)
   match t with
-  | Var x -> Var x (* TODO: What should this give if x refers to a ref? *)
-  | Abs (x, u) -> Abs (x, eval_with_mem u sigma)
+  | Var x -> Var x
+  | Abs (x, u) -> Abs (x, u) (* on ne réduit pas sous les lambdas *)
   | App (m, n) -> (
       let m_val = eval_with_mem m sigma in
       let n_val = eval_with_mem n sigma in
@@ -119,10 +125,6 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       print_endline ("n_val: " ^ Common.print_term n_val); *)
       match m_val with
       | Abs (x, m_prime) -> eval_with_mem (substitue_var m_prime x n_val) sigma
-      | Fix (phi, Abs (x, m_prime)) ->
-          let s = substitue_var m_prime phi (Fix (phi, m_prime)) in
-          (* print_endline ("substituted: " ^ Common.print_term s); *)
-          eval_with_mem (substitue_var s x n_val) sigma
       | e -> e
       (* | _ -> raise AppToNonAbs *))
   | N i -> N i
@@ -139,6 +141,13 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       | t3, t4 ->
           Sub (t3, t4)
           (* | (r1, r2) -> raise (Echec_typage ("typing error on - applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
+      )
+  | Mult (t1, t2) -> (
+      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
+      | N n1, N n2 -> N (n1 * n2)
+      | t3, t4 ->
+          Mult (t3, t4)
+          (* | (r1, r2) -> raise (Echec_typage ("typing error on * applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
   | EmptyList -> EmptyList
   | Cons (hd, tl) -> Cons (eval_with_mem hd sigma, eval_with_mem tl sigma)
@@ -167,7 +176,6 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
   | Let (x, e1, e2) ->
       let t1 = eval_with_mem e1 sigma in
       let s2 = substitue_var e2 x t1 in
-      (* print_endline ("evaluating s2: " ^ Common.print_term s2); *)
       eval_with_mem s2 sigma
   | Ref e ->
       let adr = nouvelle_adresse () in
@@ -189,7 +197,7 @@ let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
       | t ->
           failwith ("Attempted to assign to non-address: " ^ Common.print_term t)
       )
-  | Fix (phi, m) -> Fix (phi, m)
+  | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
   | Address adr -> Address adr
   | Unit -> Unit
 

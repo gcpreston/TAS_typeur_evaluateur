@@ -1,19 +1,14 @@
 (executable
- (public_name typeur)
- (name main_typeur)
+ (public_name demo)
+ (name main_demo)
  (libraries typeur_evaluateur))
 
 (executable
  (public_name eval)
- (name main_eval)
- (libraries typeur_evaluateur))
-
-(executable
- (public_name eval_file)
  (name main_eval_file)
  (libraries typeur_evaluateur))
 
 (executable
- (public_name type_file)
+ (public_name type)
  (name main_type_file)
  (libraries typeur_evaluateur))

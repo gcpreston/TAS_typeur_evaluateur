@@ -30,8 +30,8 @@ Les features implementés sont:
 Pour trouver le type d'un programme dans un fichier :
 
 ```bash
-dune exec typage <path/to/program.tas>
-# par exemble : dune exec typage examples/recursion.tas
+dune exec type <path/to/program.tas>
+# par exemble : dune exec typage examples/factorial.tas
 ```
 
 ### Evaluation
@@ -40,5 +40,5 @@ Pour evaluer un programme dans un fichier :
 
 ```bash
 dune exec eval <path/to/program.tas>
-# par exemble : dune exec typage examples/recursion.tas
+# par exemble : dune exec typage examples/factorial.tas
 ```

@@ -27,6 +27,8 @@ let ex_let_poly : Common.pterm =
       Abs ("x", Var "x"),
       Let ("_", App (Var "id", N 0), App (Var "id", EmptyList)) )
 
+let ex_let_exact : Common.pterm = Let ("id", Abs ("x", Var "x"), App (Var "id", N 5))
+
 let ex_let_fail : Common.pterm =
   Let
     ( "id",
@@ -63,8 +65,8 @@ let type_inferences_expectations :
     );
     ("test_nat1", ex_nat1, Typable NatType);
     ("test_nat2", ex_nat2, Typable (ArrowType (NatType, NatType)));
-    ("test_omega", ex_omega, PasTypable "occurence de T3 dans (T3 -> T3)");
-    ("test_nat3", ex_nat3, PasTypable "type fleche non-unifiable avec NatType");
+    ("test_omega", ex_omega, PasTypable "occurence de T5 dans (T5 -> T2)");
+    ("test_nat3", ex_nat3, PasTypable "type entier non-unifiable avec (T5 -> T6)");
     ("test_lst1", ex_lst1, Typable (ListType (VarType "T1")));
     ("test_hd", ex_hd, Typable NatType);
     ("test_tl", ex_tl, Typable (ListType NatType));
@@ -74,14 +76,15 @@ let type_inferences_expectations :
       PasTypable "type entier non-unifiable avec [T2]" );
     ("test_ifempty", ex_ifempty, Typable NatType);
     ("test_let", ex_let, Typable NatType);
-    ("test_let_poly", ex_let_poly, Typable (ListType (VarType "T7")));
+    ("test_let_poly", ex_let_poly, Typable (ListType (VarType "T9")));
+    ("test_let_exact", ex_let_exact, Typable NatType);
     ( "test_let_fail",
       ex_let_fail,
-      PasTypable "type entier non-unifiable avec [T9]" );
+      PasTypable "type entier non-unifiable avec [T11]" );
     ("test_ref", ex_ref, Typable (ListType NatType));
     ( "test_assign_fail",
       ex_assign_fail,
-      PasTypable "type fleche non-unifiable avec NatType" );
+      PasTypable "type entier non-unifiable avec (T8 -> T8)" );
     ("test_fix", ex_fix, Typable (ArrowType (NatType, NatType)));
   ]
 

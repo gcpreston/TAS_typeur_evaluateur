@@ -29,7 +29,7 @@ and print_vars (vars : string list) : string =
   match vars with
   | [] -> ""
   | v :: [] -> v
-  | v :: rest -> v ^ ", " ^ print_vars rest
+  | v :: rest -> v ^ " " ^ print_vars rest
 
 (* générateur de noms frais de variables de types *)
 let compteur_var : int ref = ref 0
@@ -123,88 +123,100 @@ let is_value (e : Common.pterm) : bool =
     in order to mimic historical, simple-as-possible OCaml behavior.
   *)
 
+let rec print_equa (e : equa) =
+  match e with
+  | [] -> ""
+  | (t1, t2) :: erest ->
+      print_type t1 ^ " = " ^ print_type t2 ^ ", " ^ print_equa erest
+
 (* genere des equations de typage à partir d'un terme *)
-let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) : equa =
+let rec genere_equa (te : Common.pterm) (ty : ptype) (e : env) (should_generalize : bool): equa =
   match te with
   | Var v ->
       let env_type = cherche_type v e in
+      (* print_endline ("Found var " ^ v ^ " in env as " ^ print_type env_type);
       let tv : ptype = instantiate env_type in
-      [ (ty, tv) ]
+      print_endline ("env type: " ^ print_type env_type ^ ", instantiated: " ^ print_type tv);
+      [ (ty, tv) ] *)
+       [(ty, env_type)]
   | App (t1, t2) ->
-      let nv : string = nouvelle_var () in
-      let eq1 : equa = genere_equa t1 (ArrowType (VarType nv, ty)) e in
-      let eq2 : equa = genere_equa t2 (VarType nv) e in
-      (ty, VarType nv) :: (eq1 @ eq2)
+      let nv1 : string = nouvelle_var () in
+      let nv2 : string = nouvelle_var () in
+      let eq1 : equa = genere_equa t1 (ArrowType (VarType nv1, VarType nv2)) e false in
+      let eq2 : equa = genere_equa t2 (VarType nv1) e false in
+      (ty, VarType nv2) :: (eq1 @ eq2)
   | Abs (x, t) ->
-      let nv1 : string = nouvelle_var () and nv2 : string = nouvelle_var () in
-      (ty, ArrowType (VarType nv1, VarType nv2))
-      :: genere_equa t (VarType nv2) ((x, VarType nv1) :: e)
+      let nv1 : string = nouvelle_var () in
+      let nv2 : string = nouvelle_var () in
+      let goal_type = ArrowType (VarType nv1, VarType nv2) in
+      let goal_eq = (ty, if should_generalize then generalize goal_type else goal_type) in
+      let body_eq = genere_equa t (VarType nv2) ((x, VarType nv1) :: e) false in
+      goal_eq :: body_eq
   | N _ -> [ (ty, NatType) ]
   | Add (t1, t2) ->
-      let eq1 : equa = genere_equa t1 NatType e in
-      let eq2 : equa = genere_equa t2 NatType e in
+      let eq1 : equa = genere_equa t1 NatType e false in
+      let eq2 : equa = genere_equa t2 NatType e false in
       (ty, NatType) :: (eq1 @ eq2)
   | Sub (t1, t2) ->
-      let eq1 : equa = genere_equa t1 NatType e in
-      let eq2 : equa = genere_equa t2 NatType e in
+      let eq1 : equa = genere_equa t1 NatType e false in
+      let eq2 : equa = genere_equa t2 NatType e false in
       (ty, NatType) :: (eq1 @ eq2)
   | Mult (t1, t2) ->
-      let eq1 : equa = genere_equa t1 NatType e in
-      let eq2 : equa = genere_equa t2 NatType e in
+      let eq1 : equa = genere_equa t1 NatType e false in
+      let eq2 : equa = genere_equa t2 NatType e false in
       (ty, NatType) :: (eq1 @ eq2)
   | EmptyList ->
       let nv : string = nouvelle_var () in
       [ (ty, ListType (VarType nv)) ]
-  (* hd = T1, tl = [T1] *)
   | Cons (hd, tl) ->
       let nv : string = nouvelle_var () in
-      let eq1 : equa = genere_equa hd (VarType nv) e in
-      let eq2 : equa = genere_equa tl (ListType (VarType nv)) e in
+      let eq1 : equa = genere_equa hd (VarType nv) e false in
+      let eq2 : equa = genere_equa tl (ListType (VarType nv)) e false in
       (ty, ListType (VarType nv)) :: (eq1 @ eq2)
   | Head l ->
       let nv : string = nouvelle_var () in
-      (ty, VarType nv) :: genere_equa l (ListType (VarType nv)) e
+      (ty, VarType nv) :: genere_equa l (ListType (VarType nv)) e false
   | Tail l ->
       let nv : string = nouvelle_var () in
-      (ty, ListType (VarType nv)) :: genere_equa l (ListType (VarType nv)) e
+      (ty, ListType (VarType nv)) :: genere_equa l (ListType (VarType nv)) e false
   | IfZero (c, t, f) ->
       let nv : string = nouvelle_var () in
-      let eqc : equa = genere_equa c NatType e in
-      let eqt : equa = genere_equa t (VarType nv) e in
-      let eqf : equa = genere_equa f (VarType nv) e in
+      let eqc : equa = genere_equa c NatType e false in
+      let eqt : equa = genere_equa t (VarType nv) e false in
+      let eqf : equa = genere_equa f (VarType nv) e false in
       (ty, VarType nv) :: (eqc @ eqt @ eqf)
   | IfEmpty (c, t, f) ->
       let nv1 : string = nouvelle_var () in
       let nv2 : string = nouvelle_var () in
-      let eqc : equa = genere_equa c (ListType (VarType nv1)) e in
-      let eqt : equa = genere_equa t (VarType nv2) e in
-      let eqf : equa = genere_equa f (VarType nv2) e in
+      let eqc : equa = genere_equa c (ListType (VarType nv1)) e false in
+      let eqt : equa = genere_equa t (VarType nv2) e false in
+      let eqf : equa = genere_equa f (VarType nv2) e false in
       (ty, VarType nv2) :: (eqc @ eqt @ eqf)
   | Let (x, e1, e2) ->
       let nv1 : string = nouvelle_var () in
-      let eq1 : equa = genere_equa e1 (VarType nv1) e in
+      let eq1 : equa = genere_equa e1 (VarType nv1) e (is_value e1) in
       (* Value restriction :: Weak polymorphism *)
-      let maybe_gen_nv1 =
+      (* let maybe_gen_nv1 =
         if is_value e1 then generalize (VarType nv1) else VarType nv1
-      in
-      let eq2 : equa = genere_equa e2 ty ((x, maybe_gen_nv1) :: e) in
+      in *)
+      let eq2 : equa = genere_equa e2 ty ((x, VarType nv1) :: e) false in
       eq1 @ eq2
   | Ref m ->
       let nv : string = nouvelle_var () in
-      (ty, RefType (VarType nv)) :: genere_equa m (VarType nv) e
+      (ty, RefType (VarType nv)) :: genere_equa m (VarType nv) e false
   | Deref m ->
       let nv : string = nouvelle_var () in
-      (ty, VarType nv) :: genere_equa m (RefType (VarType nv)) e
+      (ty, VarType nv) :: genere_equa m (RefType (VarType nv)) e false
   | Assign (e1, e2) ->
       let nv : string = nouvelle_var () in
-      let eq1 : equa = genere_equa e1 (RefType (VarType nv)) e in
-      let eq2 : equa = genere_equa e2 (VarType nv) e in
+      let eq1 : equa = genere_equa e1 (RefType (VarType nv)) e false in
+      let eq2 : equa = genere_equa e2 (VarType nv) e false in
       (ty, UnitType) :: (eq1 @ eq2)
   | Fix (phi, m) ->
       let nv_phi : string = nouvelle_var () in
       let nv_m : string = nouvelle_var () in
       let eq : equa =
-        genere_equa m (VarType nv_m) ((phi, VarType nv_phi) :: e)
+        genere_equa m (VarType nv_m) ((phi, VarType nv_phi) :: e) false
       in
       (ty, VarType nv_m) :: eq
   | t ->
@@ -233,12 +245,6 @@ let rec trouve_but (e : equa_zip) (but : string) =
   | _, (VarType v, t) :: _ when v = but -> t
   | _, (t, VarType v) :: _ when v = but -> t
   | e1, c :: e2 -> trouve_but (c :: e1, e2) but
-
-let rec print_equa (e : equa) =
-  match e with
-  | [] -> ""
-  | (t1, t2) :: erest ->
-      print_type t1 ^ " = " ^ print_type t2 ^ ", " ^ print_equa erest
 
 let print_equa_zip (e : equa_zip) =
   match e with
@@ -272,11 +278,11 @@ let rec unification (e : equa_zip) (but : string) : ptype =
   | e1, (ArrowType (t1, t2), ArrowType (t3, t4)) :: e2 ->
       unification (e1, (t1, t3) :: (t2, t4) :: e2) but
       (* types fleche à gauche pas à droite : echec  *)
-  | _e1, (ArrowType (_, _), t3) :: _e2 ->
+  (* | _e1, (ArrowType (_, _), t3) :: _e2 ->
       raise (Echec_unif ("type fleche non-unifiable avec " ^ print_type t3))
       (* types fleche à droite pas à gauche : echec  *)
   | _e1, (t3, ArrowType (_, _)) :: _e2 ->
-      raise (Echec_unif ("type fleche non-unifiable avec " ^ print_type t3))
+      raise (Echec_unif ("type fleche non-unifiable avec " ^ print_type t3)) *)
       (* types nat des deux cotes : on passe *)
   | e1, (NatType, NatType) :: e2 ->
       unification (e1, e2) but (* types nat à gauche pas à droite : échec *)
@@ -306,12 +312,21 @@ let rec unification (e : equa_zip) (but : string) : ptype =
       (* types unit des deux cotes : on passe *)
   | e1, (UnitType, UnitType) :: e2 ->
       unification (e1, e2) but
-      (* TODO *)
-      (* types scheme dans les équations : échec *)
-  | _e1, (SchemeType _, t3) :: _e2 ->
-      raise (Echec_unif ("type scheme non-unifiable avec " ^ print_type t3))
-  | _e1, (t3, SchemeType _) :: _e2 ->
-      raise (Echec_unif ("type scheme non-unifiable avec " ^ print_type t3))
+      (* types unit à gauche pas à droite : échec *)
+  | _e1, (UnitType, t3) :: _e2 ->
+      raise (Echec_unif ("type unit non-unifiable avec " ^ print_type t3))
+      (* types unit à droite pas à gauche : échec *)
+  | _e1, (t3, UnitType) :: _e2 ->
+      raise (Echec_unif ("type unit non-unifiable avec " ^ print_type t3))
+      (* types scheme des deux cotes : on passe *)
+  | e1, (SchemeType (a1, t1), SchemeType (a2, t2)) :: e2 ->
+      unification (e1, (instantiate (SchemeType (a1, t1)), instantiate (SchemeType (a2, t2))) :: e2) but
+      (* types ref à gauche pas à droite : unification du scheme *)
+  | e1, (SchemeType (a1, t1), t4) :: e2 ->
+       unification (e1, (instantiate (SchemeType (a1, t1)), t4) :: e2) but
+      (* types ref à droite pas à gauche : unification du scheme *)
+  | e1, (t3, SchemeType (a2, t2)) :: e2 ->
+       unification (e1, (t3, (instantiate (SchemeType (a2, t2)))) :: e2) but
 
 type inference_result = Typable of ptype | PasTypable of string
 
@@ -319,7 +334,7 @@ type inference_result = Typable of ptype | PasTypable of string
 let inference (t : Common.pterm) : inference_result =
   compteur_var := 0;
   compteur_scheme_var := 0;
-  let e : equa_zip = ([], genere_equa t (VarType "but") []) in
+  let e : equa_zip = ([], genere_equa t (VarType "but") [] false) in
   (* print_endline
     ("starting inference with " ^ Common.print_term t ^ ", equations: "
    ^ print_equa_zip e); *)

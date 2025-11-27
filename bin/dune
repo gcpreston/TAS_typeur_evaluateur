@@ -12,3 +12,8 @@
  (public_name eval_file)
  (name main_eval_file)
  (libraries typeur_evaluateur))
+
+(executable
+ (public_name type_file)
+ (name main_type_file)
+ (libraries typeur_evaluateur))

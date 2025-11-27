@@ -1,0 +1,2 @@
+let length = fix phi -> fun l -> ife l 0 (1 + (phi (tl l))) in
+length (cons 5 (cons 6 (cons 7 [])))

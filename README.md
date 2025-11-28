@@ -25,6 +25,12 @@ Les fonctionnalités implémentées sont :
 
 ## Build et exécution
 
+Ce projet a les dépendances suivantes : `ocamllex` pour le lexing, `menhir` pour le parsing, et `ounit2` pour le testing. Si vous rencontrez des erreurs pour le build ou le testing, assurez-vous que vous avez les packages installés, par exemple :
+
+```bash
+opam install ocamllex
+```
+
 ### Typage
 
 Pour trouver le type d'un programme dans un fichier :

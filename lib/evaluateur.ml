@@ -108,102 +108,114 @@ exception Echec_typage of string
 (* TODO: Is there some way to avoid this in the evaluator?
    In APS, we just said that we assume the typer was run before the evaluator. *)
 
-(* TODO: Have outer wrapper to call alpha_convert first *)
-
 type mem = (int, Common.pterm) Hashtbl.t
 
 (* Evaluateur left-to-right, call-by-value *)
-let rec eval_with_mem (t : Common.pterm) (sigma : mem) : Common.pterm =
+let rec eval_with_mem (t : Common.pterm) (sigma : mem) : (Common.pterm * mem) =
   (* print_endline ("eval_with_mem " ^ Common.print_term t); *)
   match t with
-  | Var x -> Var x
-  | Abs (x, u) -> Abs (x, u) (* on ne réduit pas sous les lambdas *)
+  | Var x -> Var x, sigma
+  | Abs (x, u) -> Abs (x, u), sigma (* on ne réduit pas sous les lambdas *)
   | App (m, n) -> (
-      let m_val = eval_with_mem m sigma in
-      let n_val = eval_with_mem n sigma in
+      let (m_val, m_mem) = eval_with_mem m sigma in
+      let (n_val, n_mem) = eval_with_mem n m_mem in
       (* print_endline ("m_val: " ^ Common.print_term m_val);
       print_endline ("n_val: " ^ Common.print_term n_val); *)
       match m_val with
       | Abs (x, m_prime) -> eval_with_mem (substitue_var m_prime x n_val) sigma
-      | e -> e
+      | e -> e, n_mem
       (* | _ -> raise AppToNonAbs *))
-  | N i -> N i
+  | N i -> N i, sigma
   | Add (t1, t2) -> (
-      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
-      | N n1, N n2 -> N (n1 + n2)
+      let (a, a_mem) = eval_with_mem t1 sigma in
+      let (b, b_mem) = eval_with_mem t2 a_mem in
+      match (a, b) with
+      | N n1, N n2 -> N (n1 + n2), b_mem
       | t3, t4 ->
-          Add (t3, t4)
+          Add (t3, t4), b_mem
           (* | (r1, r2) -> raise (Echec_typage ("typing error on + applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
   | Sub (t1, t2) -> (
-      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
-      | N n1, N n2 -> N (n1 - n2)
+      let (a, a_mem) = eval_with_mem t1 sigma in
+      let (b, b_mem) = eval_with_mem t2 a_mem in
+      match (a, b) with
+      | N n1, N n2 -> N (n1 - n2), b_mem
       | t3, t4 ->
-          Sub (t3, t4)
+          Sub (t3, t4), b_mem
           (* | (r1, r2) -> raise (Echec_typage ("typing error on - applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
   | Mult (t1, t2) -> (
-      match (eval_with_mem t1 sigma, eval_with_mem t2 sigma) with
-      | N n1, N n2 -> N (n1 * n2)
+      let (a, a_mem) = eval_with_mem t1 sigma in
+      let (b, b_mem) = eval_with_mem t2 a_mem in
+      match (a, b) with
+      | N n1, N n2 -> N (n1 * n2), b_mem
       | t3, t4 ->
-          Mult (t3, t4)
+          Mult (t3, t4), b_mem
           (* | (r1, r2) -> raise (Echec_typage ("typing error on * applied to " ^ (Common.print_term r1) ^ " and " ^ (Common.print_term r2)))) *)
       )
-  | EmptyList -> EmptyList
-  | Cons (hd, tl) -> Cons (eval_with_mem hd sigma, eval_with_mem tl sigma)
+  | EmptyList -> EmptyList, sigma
+  | Cons (hd, tl) ->
+      let (h, h_mem) = eval_with_mem hd sigma in
+      let (t, t_mem) = eval_with_mem tl h_mem in
+      Cons (h, t), t_mem
   | Head l -> (
       match eval_with_mem l sigma with
-      | Cons (hd, _tl) -> hd
+      | Cons (hd, _tl), sigma_prime -> hd, sigma_prime
       | t ->
           t
           (* | _ -> raise (Echec_typage ("typing error on head applied to " ^ (Common.print_term l)))) *)
       )
   | Tail l -> (
       match eval_with_mem l sigma with
-      | Cons (_hd, tl) -> tl
+      | Cons (_hd, tl), sigma_prime -> tl, sigma_prime
       | t ->
           t
           (* | _ -> raise (Echec_typage ("typing error on tail applied to " ^ (Common.print_term l)))) *)
       )
   | IfZero (c, t, f) -> (
-      match eval_with_mem c sigma with
-      | N 0 -> eval_with_mem t sigma
-      | _ -> eval_with_mem f sigma)
+      let (cond, cond_mem) = eval_with_mem c sigma in
+      match cond with
+      | N 0 -> eval_with_mem t cond_mem
+      | _ -> eval_with_mem f cond_mem)
   | IfEmpty (c, t, f) -> (
-      match eval_with_mem c sigma with
-      | EmptyList -> eval_with_mem t sigma
-      | _ -> eval_with_mem f sigma)
+      let (cond, cond_mem) = eval_with_mem c sigma in
+      match cond with
+      | EmptyList -> eval_with_mem t cond_mem
+      | _ -> eval_with_mem f cond_mem)
   | Let (x, e1, e2) ->
-      let t1 = eval_with_mem e1 sigma in
+      let t1, sigma_prime = eval_with_mem e1 sigma in
       let s2 = substitue_var e2 x t1 in
-      eval_with_mem s2 sigma
+      eval_with_mem s2 sigma_prime
   | Ref e ->
       let adr = nouvelle_adresse () in
-      Hashtbl.add sigma adr (eval_with_mem e sigma);
-      Address adr
+      let (r, r_mem) = eval_with_mem e sigma in
+      Hashtbl.add r_mem adr (r);
+      Address adr, r_mem
   | Deref e -> (
-      match eval_with_mem e sigma with
-      | Address adr -> Hashtbl.find sigma adr
+      let (d, d_mem) = eval_with_mem e sigma in
+      match d with
+      | Address adr -> (Hashtbl.find sigma adr), d_mem
       | t ->
           failwith
             ("Attempted to dereference non-address: " ^ Common.print_term t))
   | Assign (e1, e2) -> (
-      let t1 = eval_with_mem e1 sigma in
+      let t1, sigma_prime = eval_with_mem e1 sigma in
       match t1 with
       | Address adr ->
-          let t2 = eval_with_mem e2 sigma in
-          Hashtbl.replace sigma adr t2;
-          Unit
+          let t2, sigma_pprime = eval_with_mem e2 sigma_prime in
+          Hashtbl.replace sigma_pprime adr t2;
+          Unit, sigma_pprime
       | t ->
           failwith ("Attempted to assign to non-address: " ^ Common.print_term t)
       )
-  | Fix (phi, m) -> substitue_var m phi (Fix (phi, m))
-  | Address adr -> Address adr
-  | Unit -> Unit
+  | Fix (phi, m) -> substitue_var m phi (Fix (phi, m)), sigma
+  | Address adr -> Address adr, sigma
+  | Unit -> Unit, sigma
 
 let eval (t : Common.pterm) =
   compteur_var := 0;
   compteur_var_adr := 0;
   let t1 = alpha_convert t in
   let sigma : mem = Hashtbl.create 123 in
-  eval_with_mem t1 sigma
+  let (result, _memory) = eval_with_mem t1 sigma in
+  result
